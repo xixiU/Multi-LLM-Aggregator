@@ -1,12 +1,12 @@
 // Filename: scripts/content_grok.js
 
-// 警告：这些选择器是推测性的，极有可能需要你手动查找和修改
+// Grok/X.com的选择器 - 可能需要根据实际界面调整
 const SELECTORS = {
-    // Grok的输入框可能是一个有特定aria-label的div
-    textInput: 'div[data-testid="dmComposerTextInput"]',
-    sendButton: 'button[data-testid="dmComposerSendButton"]',
-    // 回答可能在带有 'conversation-turn' testid 的 div 中
-    responseContainer: 'div[data-testid="conversation-turn-text"]'
+    // Grok的输入框选择器
+    textInput: 'div[data-testid="dmComposerTextInput"], div[contenteditable="true"], textarea',
+    sendButton: 'button[data-testid="dmComposerSendButton"], button[aria-label*="发送"], button[aria-label*="Send"]',
+    // 回答容器选择器
+    responseContainer: 'div[data-testid="conversation-turn-text"], div[class*="message"], div[class*="response"]'
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

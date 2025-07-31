@@ -1,13 +1,13 @@
 // Filename: scripts/content_gemini.js
 
 const SELECTORS = {
-  // Gemini的输入框是一个富文本编辑器(div)，不是textarea
-  richTextInput: 'div.ql-editor.ql-blank',
-  sendButton: 'button[aria-label="Send message"]',
-  // 回答通常包含在一个有 'response-content' 类的元素中
-  responseContainer: '.response-content .markdown',
-  // Gemini在思考时会显示一个加载动画
-  loadingIndicator: '.loading-animation-container'
+  // Gemini的输入框选择器
+  richTextInput: 'div[contenteditable="true"]',
+  sendButton: 'button[aria-label="Send message"], button[data-testid="send-button"]',
+  // 回答容器选择器
+  responseContainer: 'div[data-testid="response-content"], .response-content',
+  // 加载指示器
+  loadingIndicator: '[data-testid="loading-indicator"], .loading-animation-container'
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

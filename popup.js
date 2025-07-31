@@ -1,21 +1,12 @@
-document.getElementById('submit-button').addEventListener('click', () => {
-  const prompt = document.getElementById('prompt-input').value;
-  if (!prompt) return;
-
-  const ais = ['chatgpt', 'gemini', 'kimi', 'grok'];
-
-  ais.forEach(ai => {
-    // 清空旧结果并显示加载状态
-    const contentDiv = document.querySelector(`#${ai}-result .content`);
-    contentDiv.textContent = '正在等待 ' + ai + ' 的回答...';
-
-    // 发送消息到 background.js
-    chrome.runtime.sendMessage({
-      type: 'queryAI',
-      target: ai,
-      prompt: prompt
-    });
+// 点击扩展图标时打开主页面
+document.addEventListener('DOMContentLoaded', () => {
+  // 打开主页面
+  chrome.tabs.create({
+    url: chrome.runtime.getURL('main.html')
   });
+
+  // 关闭popup
+  window.close();
 });
 
 // 监听来自 background.js 的结果

@@ -1,11 +1,11 @@
 // Filename: scripts/content_kimi.js
 
 const SELECTORS = {
-  textArea: 'textarea[placeholder*="跟 Kimi 说点什么"]',
-  sendButton: 'button', // Kimi的按钮选择器可能不稳定，需要更精确的定位
-  // Kimi的每个回答都在一个特定的div里
-  responseContainer: 'div[class*="bubble-content-wrapper"]',
-  stopGeneratingButton: 'button[class*="stop-button"]'
+  textArea: 'textarea[placeholder*="跟 Kimi 说点什么"], textarea[placeholder*="说点什么"], textarea',
+  sendButton: 'button[type="submit"], button:has(svg), button', // 更精确的按钮选择器
+  // Kimi的回答容器
+  responseContainer: 'div[class*="bubble-content-wrapper"], div[class*="message-content"]',
+  stopGeneratingButton: 'button[class*="stop-button"], button[aria-label*="停止"]'
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

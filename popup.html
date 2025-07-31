@@ -5,32 +5,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Aggregator</title>
-  <link rel="stylesheet" href="popup.css">
+  <style>
+    body {
+      width: 300px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      text-align: center;
+    }
+
+    .loading {
+      color: #667eea;
+      font-size: 16px;
+      margin: 20px 0;
+    }
+
+    .spinner {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #667eea;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      margin: 10px auto;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>AI Aggregator</h1>
-    <textarea id="prompt-input" placeholder="在此输入你的问题..."></textarea>
-    <button id="submit-button">发送给所有AI</button>
-    <div id="results-container">
-      <div class="result-box" id="chatgpt-result">
-        <h2>ChatGPT</h2>
-        <div class="content">...</div>
-      </div>
-      <div class="result-box" id="gemini-result">
-        <h2>Gemini</h2>
-        <div class="content">...</div>
-      </div>
-      <div class="result-box" id="kimi-result">
-        <h2>Kimi</h2>
-        <div class="content">...</div>
-      </div>
-      <div class="result-box" id="grok-result">
-        <h2>Grok</h2>
-        <div class="content">...</div>
-      </div>
-    </div>
+  <h2>AI Aggregator</h2>
+  <div class="loading">
+    <div class="spinner"></div>
+    <p>正在打开主界面...</p>
   </div>
   <script src="popup.js"></script>
 </body>

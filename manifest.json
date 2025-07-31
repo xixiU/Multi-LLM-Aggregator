@@ -11,7 +11,8 @@
     "cookies",
     "scripting",
     "tabs",
-    "storage"
+    "storage",
+    "activeTab"
   ],
   "host_permissions": [
     "https://chat.openai.com/*",
@@ -22,6 +23,18 @@
   "action": {
     "default_popup": "popup.html"
   },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "main.html",
+        "main.css",
+        "main.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
   "background": {
     "service_worker": "background.js"
   },
