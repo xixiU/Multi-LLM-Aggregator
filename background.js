@@ -21,7 +21,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // 先获取当前活跃的标签页，以便稍后切换回来
         chrome.tabs.query({ active: true, currentWindow: true }, (activeTabs) => {
             const originalTab = activeTabs[0];
-            console.log('Original active tab:', originalTab.id);
+            console.log('Original active tab:', originalTab ? originalTab.id : 'none', 'URL:', originalTab ? originalTab.url : 'none');
 
             // 查找对应的AI标签页
             chrome.tabs.query({ url: target.url }, (tabs) => {
@@ -64,27 +64,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                     }
 
                                     // 发送完成后，切换回原来的标签页
-                                    if (originalTab && originalTab.id !== targetTab.id) {
+                                    if (originalTab && originalTab.id !== targetTab.id &&
+                                        originalTab.url && !originalTab.url.startsWith('chrome-extension://')) {
+                                        console.log('Preparing to switch back to original tab:', originalTab.id, originalTab.url);
                                         setTimeout(() => {
-                                            chrome.tabs.update(originalTab.id, { active: true }, () => {
-                                                console.log('Switched back to original tab:', originalTab.id);
+                                            // 先检查原始标签页是否还存在
+                                            chrome.tabs.get(originalTab.id, (tab) => {
+                                                if (chrome.runtime.lastError) {
+                                                    console.log('Original tab no longer exists:', chrome.runtime.lastError);
+                                                } else {
+                                                    chrome.tabs.update(originalTab.id, { active: true }, () => {
+                                                        if (chrome.runtime.lastError) {
+                                                            console.error('Failed to switch back to original tab:', chrome.runtime.lastError);
+                                                        } else {
+                                                            console.log('Successfully switched back to original tab:', originalTab.id);
+                                                        }
+                                                    });
+                                                }
                                             });
-                                        }, 500); // 等待500ms确保消息发送完成
+                                        }, 1000); // 增加到1秒确保消息发送完成
+                                    } else {
+                                        console.log('No need to switch tabs - same tab, no original tab, or extension tab');
                                     }
                                 });
                             });
-                        });
-                    } else {
-                        console.log('No tabs found for URL:', target.url);
-                        // 如果找不到标签页，可以发送一个错误信息回UI
-                        chrome.runtime.sendMessage({
-                            type: 'aiError',
-                            source: message.target,
-                            error: '请先在浏览器中打开并登录 ' + target.url.replace('/*', '')
-                        });
-                    }
+                        }, 300); // 300ms后激活
+                    });
+                } else {
+                    console.log('No tabs found for URL:', target.url);
+                    // 如果找不到标签页，可以发送一个错误信息回UI
+                    chrome.runtime.sendMessage({
+                        type: 'aiError',
+                        source: message.target,
+                        error: '请先在浏览器中打开并登录 ' + target.url.replace('/*', '')
+                    });
+                }
+            });
         });
-            sendResponse({ success: true });
+        sendResponse({ success: true });
         } else if (message.type === 'debugTabs') {
             // 调试：获取所有标签页
             chrome.tabs.query({}, (tabs) => {

@@ -124,9 +124,9 @@ class AIAggregator {
         if (contentElement) {
             // 检测是否需要markdown渲染
             if (this.isMarkdownContent(content)) {
-                // 渲染markdown为HTML
+                // 使用简单的markdown渲染器
                 try {
-                    contentElement.innerHTML = marked.parse(content);
+                    contentElement.innerHTML = this.simpleMarkdownRender(content);
                 } catch (error) {
                     console.error('Markdown渲染失败:', error);
                     contentElement.textContent = content;
@@ -156,6 +156,47 @@ class AIAggregator {
         ];
 
         return markdownPatterns.some(pattern => pattern.test(content));
+    }
+
+    // 简单的markdown渲染器
+    simpleMarkdownRender(text) {
+        let html = text;
+
+        // 代码块
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+
+        // 行内代码
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        // 标题
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+        // 粗体
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        // 斜体
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // 无序列表
+        html = html.replace(/^\s*[-*+]\s+(.*)$/gim, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+        // 引用
+        html = html.replace(/^>\s+(.*)$/gim, '<blockquote>$1</blockquote>');
+
+        // 分隔线
+        html = html.replace(/^---+$/gim, '<hr>');
+
+        // 段落（简单处理）
+        html = html.replace(/\n\n/g, '</p><p>');
+        html = '<p>' + html + '</p>';
+
+        // 清理空段落
+        html = html.replace(/<p><\/p>/g, '');
+
+        return html;
     }
 
     clearResults() {
