@@ -4,7 +4,8 @@
 const SELECTORS = {
   textArea: 'div#prompt-textarea[contenteditable="true"]',
   sendButton: 'button[data-testid="send-button"]',
-  responseContainer: 'div.markdown',
+  // 抓取完整的markdown容器，避免截断
+  responseContainer: 'div[data-message-author-role="assistant"] div.markdown.prose',
   regenerateButton: 'button[data-testid*="regenerate"]', // 用于判断回答是否结束
   stopGeneratingButton: 'button[data-testid*="stop-generating"]'
 };
@@ -60,18 +61,45 @@ async function submitPrompt(prompt) {
   }
 }
 
-// 4. 监听并抓取回答
+// 4. 监听并抓取回答（支持实时流式更新）
 function observeResponse() {
-  const observer = new MutationObserver((mutations, obs) => {
-    // 判断AI是否已停止生成：寻找“停止生成”按钮是否消失
-    const stopButton = document.querySelector(SELECTORS.stopGeneratingButton);
+  let lastSentContent = '';
+  let updateTimer = null;
 
+  const observer = new MutationObserver((mutations, obs) => {
+    // 检查是否有内容更新
+    const responseElements = document.querySelectorAll(SELECTORS.responseContainer);
+    if (responseElements.length > 0) {
+      const lastResponse = responseElements[responseElements.length - 1];
+      const currentContent = extractCleanText(lastResponse);
+
+      // 如果内容有变化，发送更新
+      if (currentContent && currentContent !== lastSentContent && currentContent.length > lastSentContent.length) {
+        lastSentContent = currentContent;
+
+        // 使用防抖，避免过于频繁的更新
+        if (updateTimer) {
+          clearTimeout(updateTimer);
+        }
+        updateTimer = setTimeout(() => {
+          sendStreamingResult(currentContent, false); // false 表示还在生成中
+        }, 500); // 500ms防抖
+      }
+    }
+
+    // 判断AI是否已停止生成：寻找"停止生成"按钮是否消失
+    const stopButton = document.querySelector(SELECTORS.stopGeneratingButton);
     if (!stopButton) {
       // 停止按钮已消失，说明回答已完成
+      if (updateTimer) {
+        clearTimeout(updateTimer);
+      }
+
       const responseElements = document.querySelectorAll(SELECTORS.responseContainer);
       if (responseElements.length > 0) {
         const lastResponse = responseElements[responseElements.length - 1];
-        sendResult(lastResponse.innerText.trim());
+        const finalContent = extractCleanText(lastResponse);
+        sendStreamingResult(finalContent, true); // true 表示已完成
         obs.disconnect(); // 成功获取结果，停止监听
       }
     }
@@ -82,11 +110,16 @@ function observeResponse() {
   // 设置一个超时，以防万一
   setTimeout(() => {
     observer.disconnect();
+    if (updateTimer) {
+      clearTimeout(updateTimer);
+    }
+
     const responseElements = document.querySelectorAll(SELECTORS.responseContainer);
     if (responseElements.length > 0) {
       const lastResponse = responseElements[responseElements.length - 1];
-      if (lastResponse.innerText.trim() !== "") {
-        sendResult(lastResponse.innerText.trim());
+      const finalContent = extractCleanText(lastResponse);
+      if (finalContent !== "") {
+        sendStreamingResult(finalContent, true);
       } else {
         sendResult("错误：ChatGPT 回答超时或未能抓取到内容。");
       }
@@ -94,11 +127,132 @@ function observeResponse() {
   }, 30000); // 30秒超时
 }
 
-// 5. 发送结果回后台
+// 5. 智能提取干净的文本内容
+function extractCleanText(element) {
+  if (!element) return '';
+
+  // 创建一个元素的副本来处理
+  const clonedElement = element.cloneNode(true);
+
+  // 移除按钮容器，但保留内容区域
+  const buttonsToRemove = clonedElement.querySelectorAll('button, [aria-label*="复制"], [aria-label*="编辑"], [aria-label*="Copy"], [aria-label*="Edit"]');
+  buttonsToRemove.forEach(el => el.remove());
+
+  // 移除代码块顶部的语言标签栏（但保留代码内容）
+  const langLabels = clonedElement.querySelectorAll('.flex.items-center.text-token-text-secondary.px-4.py-2, .bg-token-sidebar-surface-primary.select-none.rounded-t-2xl');
+  langLabels.forEach(label => label.remove());
+
+  // 移除悬浮的工具栏（但保留主要内容）
+  const floatingToolbars = clonedElement.querySelectorAll('.sticky.top-9, .absolute.end-0.bottom-0');
+  floatingToolbars.forEach(toolbar => toolbar.remove());
+
+  // 构建markdown文本
+  let markdownText = '';
+
+  // 处理子元素，保持markdown结构
+  const children = clonedElement.children;
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+
+    if (child.tagName === 'P') {
+      // 段落
+      markdownText += child.innerText.trim() + '\n\n';
+    } else if (child.tagName === 'H1' || child.tagName === 'H2' || child.tagName === 'H3') {
+      // 标题
+      const level = child.tagName[1];
+      markdownText += '#'.repeat(level) + ' ' + child.innerText.trim() + '\n\n';
+    } else if (child.tagName === 'PRE' || child.classList.contains('overflow-visible!')) {
+      // 代码块
+      const codeContent = child.querySelector('code');
+      if (codeContent) {
+        markdownText += '```\n' + codeContent.innerText.trim() + '\n```\n\n';
+      }
+    } else if (child.tagName === 'UL' || child.tagName === 'OL') {
+      // 列表
+      const items = child.querySelectorAll('li');
+      items.forEach((item, index) => {
+        const prefix = child.tagName === 'UL' ? '- ' : `${index + 1}. `;
+        markdownText += prefix + item.innerText.trim() + '\n';
+      });
+      markdownText += '\n';
+    } else if (child.tagName === 'BLOCKQUOTE') {
+      // 引用
+      markdownText += '> ' + child.innerText.trim() + '\n\n';
+    } else if (child.tagName === 'HR') {
+      // 分隔线
+      markdownText += '---\n\n';
+    } else {
+      // 其他元素，直接提取文本
+      const text = child.innerText.trim();
+      if (text) {
+        markdownText += text + '\n\n';
+      }
+    }
+  }
+
+  // 如果没有找到子元素，使用整体文本
+  if (markdownText.trim() === '') {
+    markdownText = clonedElement.innerText || clonedElement.textContent || '';
+  }
+
+  // 进一步清理文本
+  return cleanResponseText(markdownText);
+}
+
+// 6. 清理响应文本，去掉按钮文本和多余内容
+function cleanResponseText(text) {
+  // 常见的按钮文本模式（更全面的列表）
+  const buttonTexts = [
+    '复制', 'Copy', '编辑', 'Edit', '朗读', 'Read aloud',
+    '复制代码', 'Copy code', '查看代码', 'View code',
+    '运行', 'Run', '测试', 'Test', '下载', 'Download',
+    '重新生成', 'Regenerate', '最佳回复', '错误回复',
+    '共享', 'Share', '在画布中编辑', 'Edit in canvas',
+    'bash', 'python', 'javascript', 'css', 'html', 'sql', 'json', 'xml'
+  ];
+
+  let cleanedText = text;
+
+  // 去掉按钮文本（更精确的匹配）
+  buttonTexts.forEach(buttonText => {
+    // 匹配独立的按钮文本（前后有空白符或换行符）
+    const regex = new RegExp(`(^|\\s|\\n)${buttonText}(\\s|\\n|$)`, 'gi');
+    cleanedText = cleanedText.replace(regex, '$1$2');
+  });
+
+  // 特殊处理：去掉代码块语言标签行（如单独的"bash"、"python"等）
+  cleanedText = cleanedText.replace(/^(bash|python|javascript|css|html|sql|json|xml|typescript|java|cpp|c\+\+)$/gim, '');
+
+  // 清理多余的空白符和换行
+  cleanedText = cleanedText
+    .replace(/\n\s*\n\s*\n+/g, '\n\n') // 减少多个连续换行
+    .replace(/[ \t]+/g, ' ') // 将多个空格/制表符合并为一个空格
+    .replace(/\n[ \t]+/g, '\n') // 去掉行开头的空格/制表符
+    .replace(/[ \t]+\n/g, '\n') // 去掉行末尾的空格/制表符
+    .replace(/^\s+|\s+$/g, '') // 去掉开头和结尾的空白符
+    .trim();
+
+  return cleanedText;
+}
+
+// 7. 发送流式结果回后台
+function sendStreamingResult(text, isComplete) {
+  chrome.runtime.sendMessage({
+    type: 'aiResponse',
+    source: 'chatgpt',
+    answer: text,
+    isStreaming: !isComplete,
+    isComplete: isComplete
+  });
+}
+
+// 8. 发送结果回后台（兼容性保留）
 function sendResult(text) {
   chrome.runtime.sendMessage({
     type: 'aiResponse',
     source: 'chatgpt',
-    answer: text
+    answer: text,
+    isStreaming: false,
+    isComplete: true
   });
 }

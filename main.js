@@ -122,9 +122,40 @@ class AIAggregator {
     updateContent(ai, content, className = '') {
         const contentElement = document.getElementById(`${ai}-content`);
         if (contentElement) {
-            contentElement.textContent = content;
+            // 检测是否需要markdown渲染
+            if (this.isMarkdownContent(content)) {
+                // 渲染markdown为HTML
+                try {
+                    contentElement.innerHTML = marked.parse(content);
+                } catch (error) {
+                    console.error('Markdown渲染失败:', error);
+                    contentElement.textContent = content;
+                }
+            } else {
+                // 普通文本内容
+                contentElement.textContent = content;
+            }
             contentElement.className = `content ${className}`;
         }
+    }
+
+    // 检测内容是否包含markdown格式
+    isMarkdownContent(content) {
+        // 检测常见的markdown模式
+        const markdownPatterns = [
+            /```[\s\S]*?```/, // 代码块
+            /`[^`\n]+`/, // 行内代码
+            /^#{1,6}\s/m, // 标题
+            /\*\*[^*\n]+\*\*/, // 粗体
+            /\*[^*\n]+\*(?!\*)/, // 斜体（避免与粗体冲突）
+            /^\s*[-*+]\s/m, // 无序列表
+            /^\s*\d+\.\s/m, // 有序列表
+            /^\s*\|.*\|.*$/m, // 表格
+            /^>\s/m, // 引用
+            /^\s*---+\s*$/m // 分隔线
+        ];
+
+        return markdownPatterns.some(pattern => pattern.test(content));
     }
 
     clearResults() {
@@ -163,8 +194,14 @@ class AIAggregator {
             console.log('收到消息:', message);
 
             if (message.type === 'aiResponse') {
-                this.updateContent(message.source, message.answer);
-                this.updateStatus(message.source, 'connected', '已连接');
+                // 支持流式更新
+                if (message.isStreaming) {
+                    this.updateContent(message.source, message.answer, 'streaming');
+                    this.updateStatus(message.source, 'streaming', '生成中...');
+                } else {
+                    this.updateContent(message.source, message.answer);
+                    this.updateStatus(message.source, 'connected', '已连接');
+                }
             } else if (message.type === 'aiError') {
                 this.updateContent(message.source, `错误：${message.error}`, 'error');
                 this.updateStatus(message.source, 'error', '连接错误');

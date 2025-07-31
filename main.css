@@ -140,6 +140,26 @@ header h1 {
     background: #d4edda;
 }
 
+.status-item.streaming {
+    border-left-color: #007bff;
+    background: #d1ecf1;
+    animation: statusPulse 2s infinite;
+}
+
+@keyframes statusPulse {
+    0% {
+        border-left-color: #007bff;
+    }
+
+    50% {
+        border-left-color: #0056b3;
+    }
+
+    100% {
+        border-left-color: #007bff;
+    }
+}
+
 .status-item.error {
     border-left-color: #dc3545;
     background: #f8d7da;
@@ -239,11 +259,163 @@ header h1 {
     font-style: italic;
 }
 
+.content.streaming {
+    border-left: 4px solid #007bff;
+    background: #f8f9fa;
+    position: relative;
+    animation: pulse 2s infinite;
+}
+
+.content.streaming::after {
+    content: '▋';
+    color: #007bff;
+    animation: blink 1s infinite;
+    font-weight: bold;
+}
+
+@keyframes pulse {
+    0% {
+        border-left-color: #007bff;
+    }
+
+    50% {
+        border-left-color: #0056b3;
+    }
+
+    100% {
+        border-left-color: #007bff;
+    }
+}
+
+@keyframes blink {
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
+}
+
 .content.error {
     color: #dc3545;
     background: #f8d7da;
     border-radius: 8px;
     padding: 15px;
+}
+
+/* Markdown 内容样式 */
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6 {
+    margin: 16px 0 8px 0;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.content h1 {
+    font-size: 1.5em;
+}
+
+.content h2 {
+    font-size: 1.3em;
+}
+
+.content h3 {
+    font-size: 1.1em;
+}
+
+.content p {
+    margin: 8px 0;
+    white-space: normal;
+}
+
+.content ul,
+.content ol {
+    margin: 8px 0;
+    padding-left: 24px;
+}
+
+.content li {
+    margin: 4px 0;
+}
+
+.content strong {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.content em {
+    font-style: italic;
+    color: #4a5568;
+}
+
+/* 行内代码样式 */
+.content code {
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 13px;
+    color: #e53e3e;
+}
+
+/* 代码块样式 */
+.content pre {
+    background: #2d3748;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    border: 1px solid #4a5568;
+}
+
+.content pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+}
+
+/* 表格样式 */
+.content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    border: 1px solid #e2e8f0;
+}
+
+.content th,
+.content td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.content th {
+    background: #f7fafc;
+    font-weight: 600;
+}
+
+/* 引用样式 */
+.content blockquote {
+    border-left: 4px solid #3182ce;
+    background: #f7fafc;
+    padding: 12px 16px;
+    margin: 12px 0;
+    color: #4a5568;
 }
 
 .instructions {
