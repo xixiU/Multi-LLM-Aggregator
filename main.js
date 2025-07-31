@@ -1,7 +1,7 @@
 // 主页面JavaScript逻辑
 class AIAggregator {
     constructor() {
-        this.ais = ['chatgpt', 'gemini', 'kimi', 'grok'];
+        this.ais = ['chatgpt', 'gemini', 'grok', 'kimi'];
         this.init();
     }
 
@@ -39,6 +39,16 @@ class AIAggregator {
 
     async checkConnections() {
         console.log('检查AI平台连接状态...');
+
+        // 先获取所有打开的标签页进行调试
+        try {
+            const response = await this.sendMessage({
+                type: 'debugTabs'
+            });
+            console.log('当前打开的标签页:', response);
+        } catch (error) {
+            console.error('获取标签页信息失败:', error);
+        }
 
         for (const ai of this.ais) {
             try {

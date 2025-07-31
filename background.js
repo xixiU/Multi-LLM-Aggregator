@@ -1,8 +1,8 @@
 const aiTargets = {
-    'chatgpt': { url: "https://chat.openai.com/*", script: "scripts/content_chatgpt.js" },
+    'chatgpt': { url: "https://chatgpt.com/*", script: "scripts/content_chatgpt.js" },
     'gemini': { url: "https://gemini.google.com/*", script: "scripts/content_gemini.js" },
-    'kimi': { url: "https://kimi.moonshot.cn/*", script: "scripts/content_kimi.js" },
-    'grok': { url: "https://x.com/i/grok", script: "scripts/content_grok.js" }
+    'grok': { url: "https://x.com/i/grok", script: "scripts/content_grok.js" },
+    'kimi': { url: "https://kimi.moonshot.cn/*", script: "scripts/content_kimi.js" }
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -64,6 +64,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
         });
         sendResponse({ success: true });
+    } else if (message.type === 'debugTabs') {
+        // 调试：获取所有标签页
+        chrome.tabs.query({}, (tabs) => {
+            const tabInfo = tabs.map(tab => ({
+                id: tab.id,
+                url: tab.url,
+                title: tab.title
+            }));
+            console.log('所有标签页:', tabInfo);
+            sendResponse({ tabs: tabInfo });
+        });
+        return true;
     } else if (message.type === 'checkConnection') {
         // 检查连接状态
         const target = aiTargets[message.target];
@@ -72,7 +84,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
         }
 
+        console.log(`检查 ${message.target} 连接，URL模式: ${target.url}`);
         chrome.tabs.query({ url: target.url }, (tabs) => {
+            console.log(`找到 ${tabs.length} 个匹配的标签页:`, tabs.map(t => t.url));
             const connected = tabs.length > 0;
             sendResponse({
                 connected: connected,
