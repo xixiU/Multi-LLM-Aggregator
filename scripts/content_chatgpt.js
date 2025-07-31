@@ -65,6 +65,7 @@ async function submitPrompt(prompt) {
 function observeResponse() {
   let lastSentContent = '';
   let updateTimer = null;
+  let hasCompletedOnce = false; // 防止重复发送完成消息
 
   const observer = new MutationObserver((mutations, obs) => {
     // 检查是否有内容更新
@@ -73,8 +74,11 @@ function observeResponse() {
       const lastResponse = responseElements[responseElements.length - 1];
       const currentContent = extractCleanText(lastResponse);
 
-      // 如果内容有变化，发送更新
-      if (currentContent && currentContent !== lastSentContent && currentContent.length > lastSentContent.length) {
+      // 如果内容有变化且不为空，发送更新
+      if (currentContent &&
+        currentContent.trim() !== '' &&
+        currentContent !== lastSentContent &&
+        currentContent.length > lastSentContent.length) {
         lastSentContent = currentContent;
 
         // 使用防抖，避免过于频繁的更新
@@ -82,15 +86,19 @@ function observeResponse() {
           clearTimeout(updateTimer);
         }
         updateTimer = setTimeout(() => {
+          console.log('ChatGPT: 发送流式更新，内容长度:', currentContent.length);
           sendStreamingResult(currentContent, false); // false 表示还在生成中
-        }, 500); // 500ms防抖
+        }, 200); // 减少到200ms防抖，提高响应速度
       }
     }
 
     // 判断AI是否已停止生成：寻找"停止生成"按钮是否消失
     const stopButton = document.querySelector(SELECTORS.stopGeneratingButton);
-    if (!stopButton) {
+    if (!stopButton && !hasCompletedOnce) {
       // 停止按钮已消失，说明回答已完成
+      console.log('ChatGPT: 检测到停止生成按钮消失，准备发送最终结果');
+      hasCompletedOnce = true; // 标记为已完成，防止重复发送
+
       if (updateTimer) {
         clearTimeout(updateTimer);
       }
@@ -99,7 +107,16 @@ function observeResponse() {
       if (responseElements.length > 0) {
         const lastResponse = responseElements[responseElements.length - 1];
         const finalContent = extractCleanText(lastResponse);
-        sendStreamingResult(finalContent, true); // true 表示已完成
+        console.log('ChatGPT: 发送最终结果，内容长度:', finalContent.length);
+
+        // 只有内容不为空才发送
+        if (finalContent && finalContent.trim() !== '') {
+          sendStreamingResult(finalContent, true); // true 表示已完成
+        } else {
+          console.log('ChatGPT: 最终内容为空，等待更多内容');
+          hasCompletedOnce = false; // 重置标记，继续等待
+          return;
+        }
         obs.disconnect(); // 成功获取结果，停止监听
       }
     }
@@ -109,6 +126,7 @@ function observeResponse() {
 
   // 设置一个超时，以防万一
   setTimeout(() => {
+    console.log('ChatGPT: 响应监听超时，尝试获取最终内容');
     observer.disconnect();
     if (updateTimer) {
       clearTimeout(updateTimer);
@@ -118,18 +136,30 @@ function observeResponse() {
     if (responseElements.length > 0) {
       const lastResponse = responseElements[responseElements.length - 1];
       const finalContent = extractCleanText(lastResponse);
-      if (finalContent !== "") {
+      console.log('ChatGPT: 超时时的内容长度:', finalContent.length);
+
+      if (finalContent && finalContent.trim() !== "" && finalContent.length > 0) {
+        console.log('ChatGPT: 超时发送最终内容');
         sendStreamingResult(finalContent, true);
       } else {
+        console.log('ChatGPT: 超时且内容为空，发送错误消息');
         sendResult("错误：ChatGPT 回答超时或未能抓取到内容。");
       }
+    } else {
+      console.log('ChatGPT: 超时且没有找到响应元素');
+      sendResult("错误：ChatGPT 回答超时或未能抓取到内容。");
     }
   }, 30000); // 30秒超时
 }
 
 // 5. 智能提取干净的文本内容
 function extractCleanText(element) {
-  if (!element) return '';
+  if (!element) {
+    console.log('ChatGPT: extractCleanText 收到空元素');
+    return '';
+  }
+
+  console.log('ChatGPT: 开始提取内容，元素类型:', element.tagName, '内容预览:', element.textContent.substring(0, 100));
 
   // 创建一个元素的副本来处理
   const clonedElement = element.cloneNode(true);
@@ -192,11 +222,18 @@ function extractCleanText(element) {
 
   // 如果没有找到子元素，使用整体文本
   if (markdownText.trim() === '') {
-    markdownText = clonedElement.innerText || clonedElement.textContent || '';
+    console.log('ChatGPT: 没有通过子元素提取到内容，使用整体文本');
+    const fallbackText = clonedElement.innerText || clonedElement.textContent || '';
+    console.log('ChatGPT: 回退文本内容:', fallbackText.substring(0, 200));
+    markdownText = fallbackText;
   }
 
+  console.log('ChatGPT: 提取的原始内容长度:', markdownText.length);
+
   // 进一步清理文本
-  return cleanResponseText(markdownText);
+  const cleanedText = cleanResponseText(markdownText);
+  console.log('ChatGPT: 清理后的内容长度:', cleanedText.length, '预览:', cleanedText.substring(0, 100));
+  return cleanedText;
 }
 
 // 6. 清理响应文本，去掉按钮文本和多余内容
@@ -237,6 +274,9 @@ function cleanResponseText(text) {
 
 // 7. 发送流式结果回后台
 function sendStreamingResult(text, isComplete) {
+  console.log('ChatGPT: 准备发送消息到background，isComplete:', isComplete, '内容预览:', text.substring(0, 50));
+
+  // 不期待回应，避免消息通道错误
   chrome.runtime.sendMessage({
     type: 'aiResponse',
     source: 'chatgpt',
@@ -244,6 +284,8 @@ function sendStreamingResult(text, isComplete) {
     isStreaming: !isComplete,
     isComplete: isComplete
   });
+
+  console.log('ChatGPT: 消息已发送，isComplete:', isComplete);
 }
 
 // 8. 发送结果回后台（兼容性保留）

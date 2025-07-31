@@ -62,10 +62,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                             error: '无法发送消息到标签页'
                                         });
                                     }
+                                    console.info('切换回来:', chrome.runtime.lastError);
 
                                     // 发送完成后，切换回原来的标签页
-                                    if (originalTab && originalTab.id !== targetTab.id &&
-                                        originalTab.url && !originalTab.url.startsWith('chrome-extension://')) {
+                                    console.log('Tab switching check:', {
+                                        hasOriginalTab: !!originalTab,
+                                        originalTabId: originalTab?.id,
+                                        targetTabId: targetTab.id,
+                                        originalTabUrl: originalTab?.url,
+                                        isDifferentTab: originalTab?.id !== targetTab.id
+                                    });
+
+                                    if (originalTab && originalTab.id !== targetTab.id && originalTab.url) {
                                         console.log('Preparing to switch back to original tab:', originalTab.id, originalTab.url);
                                         setTimeout(() => {
                                             // 先检查原始标签页是否还存在
@@ -102,45 +110,49 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             });
         });
         sendResponse({ success: true });
-        } else if (message.type === 'debugTabs') {
-            // 调试：获取所有标签页
-            chrome.tabs.query({}, (tabs) => {
-                const tabInfo = tabs.map(tab => ({
-                    id: tab.id,
-                    url: tab.url,
-                    title: tab.title
-                }));
-                console.log('所有标签页:', tabInfo);
-                sendResponse({ tabs: tabInfo });
-            });
-            return true;
-        } else if (message.type === 'checkConnection') {
-            // 检查连接状态
-            const target = aiTargets[message.target];
-            if (!target) {
-                sendResponse({ connected: false, message: '未知AI平台' });
-                return;
-            }
-
-            console.log(`检查 ${message.target} 连接，URL模式: ${target.url}`);
-            chrome.tabs.query({ url: target.url }, (tabs) => {
-                console.log(`找到 ${tabs.length} 个匹配的标签页:`, tabs.map(t => t.url));
-                const connected = tabs.length > 0;
-                sendResponse({
-                    connected: connected,
-                    message: connected ? '已连接' : '未找到标签页'
-                });
-            });
-            return true; // 保持消息通道开放
-        } else if (message.type === 'aiResponse') {
-            console.log('Forwarding AI response:', message);
-            // 转发AI响应到popup
-            chrome.runtime.sendMessage(message);
-        } else if (message.type === 'aiError') {
-            console.log('Forwarding AI error:', message);
-            // 转发AI错误到popup
-            chrome.runtime.sendMessage(message);
-        }
-        // 返回true以表明我们将异步发送响应
+    } else if (message.type === 'debugTabs') {
+        // 调试：获取所有标签页
+        chrome.tabs.query({}, (tabs) => {
+            const tabInfo = tabs.map(tab => ({
+                id: tab.id,
+                url: tab.url,
+                title: tab.title
+            }));
+            console.log('所有标签页:', tabInfo);
+            sendResponse({ tabs: tabInfo });
+        });
         return true;
-    });
+    } else if (message.type === 'checkConnection') {
+        // 检查连接状态
+        const target = aiTargets[message.target];
+        if (!target) {
+            sendResponse({ connected: false, message: '未知AI平台' });
+            return;
+        }
+
+        console.log(`检查 ${message.target} 连接，URL模式: ${target.url}`);
+        chrome.tabs.query({ url: target.url }, (tabs) => {
+            console.log(`找到 ${tabs.length} 个匹配的标签页:`, tabs.map(t => t.url));
+            const connected = tabs.length > 0;
+            sendResponse({
+                connected: connected,
+                message: connected ? '已连接' : '未找到标签页'
+            });
+        });
+        return true; // 保持消息通道开放
+    } else if (message.type === 'aiResponse') {
+        console.log('Forwarding AI response:', message);
+        // 转发AI响应到popup
+        chrome.runtime.sendMessage(message);
+        // 不需要响应给content script
+        return false;
+    } else if (message.type === 'aiError') {
+        console.log('Forwarding AI error:', message);
+        // 转发AI错误到popup
+        chrome.runtime.sendMessage(message);
+        // 不需要响应给content script
+        return false;
+    }
+    // 其他未处理的消息类型
+    return false;
+});
