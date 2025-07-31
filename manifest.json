@@ -15,7 +15,7 @@
     "activeTab"
   ],
   "host_permissions": [
-    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
     "https://gemini.google.com/*",
     "https://kimi.moonshot.cn/*",
     "https://x.com/i/grok"
@@ -41,7 +41,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://chat.openai.com/*"
+        "https://chatgpt.com/*"
       ],
       "js": [
         "scripts/content_chatgpt.js"

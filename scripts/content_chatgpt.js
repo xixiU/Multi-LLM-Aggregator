@@ -2,7 +2,7 @@
 
 // 1. 定义选择器 (未来失效时，主要修改这里)
 const SELECTORS = {
-  textArea: 'textarea#prompt-textarea',
+  textArea: 'div#prompt-textarea[contenteditable="true"]',
   sendButton: 'button[data-testid="send-button"]',
   responseContainer: 'div.markdown',
   regenerateButton: 'button[data-testid*="regenerate"]', // 用于判断回答是否结束
@@ -22,19 +22,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // 3. 提交问题
 async function submitPrompt(prompt) {
   const textArea = document.querySelector(SELECTORS.textArea);
-  const sendButton = document.querySelector(SELECTORS.sendButton);
 
-  if (!textArea || !sendButton) {
-    sendResult("错误：无法在 ChatGPT 页面找到输入框或发送按钮。");
+  if (!textArea) {
+    sendResult("错误：无法在 ChatGPT 页面找到输入框。");
     return;
   }
 
   // 填入问题并模拟真实输入事件
-  textArea.value = prompt;
+  textArea.textContent = prompt;
   textArea.dispatchEvent(new Event('input', { bubbles: true }));
 
-  // 等待一小会儿，确保按钮可用
-  await new Promise(resolve => setTimeout(resolve, 200));
+  // 触发更多事件确保界面更新
+  textArea.dispatchEvent(new Event('keyup', { bubbles: true }));
+  textArea.dispatchEvent(new Event('change', { bubbles: true }));
+
+  // 等待发送按钮出现
+  let sendButton = null;
+  let attempts = 0;
+  const maxAttempts = 10; // 最多等待2秒
+
+  while (!sendButton && attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    sendButton = document.querySelector(SELECTORS.sendButton);
+    attempts++;
+  }
+
+  if (!sendButton) {
+    sendResult("错误：发送按钮未出现，请检查输入框是否正确填入内容。");
+    return;
+  }
 
   if (!sendButton.disabled) {
     sendButton.click();
