@@ -1,0 +1,175 @@
+// 主页面JavaScript逻辑
+class AIAggregator {
+    constructor() {
+        this.ais = ['chatgpt', 'gemini', 'kimi', 'grok'];
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+        this.checkConnections();
+    }
+
+    bindEvents() {
+        // 发送按钮事件
+        document.getElementById('submit-button').addEventListener('click', () => {
+            this.submitToAllAI();
+        });
+
+        // 清空按钮事件
+        document.getElementById('clear-button').addEventListener('click', () => {
+            this.clearResults();
+        });
+
+        // 复制按钮事件
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = e.target.dataset.target;
+                this.copyResult(target);
+            });
+        });
+
+        // 回车键发送
+        document.getElementById('prompt-input').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                this.submitToAllAI();
+            }
+        });
+    }
+
+    async checkConnections() {
+        console.log('检查AI平台连接状态...');
+
+        for (const ai of this.ais) {
+            try {
+                const response = await this.sendMessage({
+                    type: 'checkConnection',
+                    target: ai
+                });
+
+                this.updateStatus(ai, response.connected ? 'connected' : 'error', response.message);
+            } catch (error) {
+                console.error(`检查 ${ai} 连接失败:`, error);
+                this.updateStatus(ai, 'error', '连接失败');
+            }
+        }
+    }
+
+    async submitToAllAI() {
+        const prompt = document.getElementById('prompt-input').value.trim();
+        if (!prompt) {
+            alert('请输入问题');
+            return;
+        }
+
+        console.log('发送问题到所有AI:', prompt);
+
+        // 更新所有AI的状态为加载中
+        this.ais.forEach(ai => {
+            this.updateContent(ai, '正在等待回答...', 'loading');
+        });
+
+        // 发送到所有AI
+        for (const ai of this.ais) {
+            try {
+                await this.sendMessage({
+                    type: 'queryAI',
+                    target: ai,
+                    prompt: prompt
+                });
+            } catch (error) {
+                console.error(`发送到 ${ai} 失败:`, error);
+                this.updateContent(ai, `错误：${error.message}`, 'error');
+            }
+        }
+    }
+
+    async sendMessage(message) {
+        return new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage(message, (response) => {
+                if (chrome.runtime.lastError) {
+                    reject(new Error(chrome.runtime.lastError.message));
+                } else {
+                    resolve(response);
+                }
+            });
+        });
+    }
+
+    updateStatus(ai, status, message) {
+        const statusElement = document.getElementById(`${ai}-status`);
+        if (statusElement) {
+            statusElement.textContent = message;
+            statusElement.className = `status-text ${status}`;
+
+            const statusItem = statusElement.closest('.status-item');
+            if (statusItem) {
+                statusItem.className = `status-item ${status}`;
+            }
+        }
+    }
+
+    updateContent(ai, content, className = '') {
+        const contentElement = document.getElementById(`${ai}-content`);
+        if (contentElement) {
+            contentElement.textContent = content;
+            contentElement.className = `content ${className}`;
+        }
+    }
+
+    clearResults() {
+        this.ais.forEach(ai => {
+            this.updateContent(ai, '等待问题...');
+        });
+        document.getElementById('prompt-input').value = '';
+    }
+
+    async copyResult(ai) {
+        const contentElement = document.getElementById(`${ai}-content`);
+        if (contentElement && contentElement.textContent.trim() !== '等待问题...') {
+            try {
+                await navigator.clipboard.writeText(contentElement.textContent);
+
+                // 显示复制成功提示
+                const btn = document.querySelector(`[data-target="${ai}"]`);
+                const originalText = btn.textContent;
+                btn.textContent = '已复制';
+                btn.style.background = 'rgba(40, 167, 69, 0.8)';
+
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = 'rgba(255,255,255,0.2)';
+                }, 2000);
+            } catch (error) {
+                console.error('复制失败:', error);
+                alert('复制失败，请手动复制');
+            }
+        }
+    }
+
+    // 监听来自background script的消息
+    listenForResponses() {
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+            console.log('收到消息:', message);
+
+            if (message.type === 'aiResponse') {
+                this.updateContent(message.source, message.answer);
+                this.updateStatus(message.source, 'connected', '已连接');
+            } else if (message.type === 'aiError') {
+                this.updateContent(message.source, `错误：${message.error}`, 'error');
+                this.updateStatus(message.source, 'error', '连接错误');
+            }
+        });
+    }
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', () => {
+    const app = new AIAggregator();
+    app.listenForResponses();
+
+    // 添加一些有用的快捷键提示
+    console.log('AI Aggregator 已加载');
+    console.log('快捷键: Ctrl+Enter 发送问题');
+    console.log('功能: 点击复制按钮可复制AI回答');
+}); 

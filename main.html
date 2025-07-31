@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Aggregator - 多AI模型对比工具</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Aggregator</h1>
+            <p class="subtitle">同时向多个AI模型发送问题并对比回答</p>
+        </header>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="prompt-input">输入您的问题：</label>
+                <textarea id="prompt-input" placeholder="在此输入您想要询问的问题..."></textarea>
+            </div>
+            <div class="button-group">
+                <button id="submit-button" class="primary-btn">发送给所有AI</button>
+                <button id="clear-button" class="secondary-btn">清空结果</button>
+            </div>
+        </div>
+
+        <div class="status-section">
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label">ChatGPT:</span>
+                    <span id="chatgpt-status" class="status-text">未连接</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Gemini:</span>
+                    <span id="gemini-status" class="status-text">未连接</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Kimi:</span>
+                    <span id="kimi-status" class="status-text">未连接</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Grok:</span>
+                    <span id="grok-status" class="status-text">未连接</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div class="results-grid">
+                <div class="result-box" id="chatgpt-result">
+                    <div class="result-header">
+                        <h2>ChatGPT</h2>
+                        <div class="result-actions">
+                            <button class="copy-btn" data-target="chatgpt">复制</button>
+                        </div>
+                    </div>
+                    <div class="content" id="chatgpt-content">等待问题...</div>
+                </div>
+
+                <div class="result-box" id="gemini-result">
+                    <div class="result-header">
+                        <h2>Gemini</h2>
+                        <div class="result-actions">
+                            <button class="copy-btn" data-target="gemini">复制</button>
+                        </div>
+                    </div>
+                    <div class="content" id="gemini-content">等待问题...</div>
+                </div>
+
+                <div class="result-box" id="kimi-result">
+                    <div class="result-header">
+                        <h2>Kimi</h2>
+                        <div class="result-actions">
+                            <button class="copy-btn" data-target="kimi">复制</button>
+                        </div>
+                    </div>
+                    <div class="content" id="kimi-content">等待问题...</div>
+                </div>
+
+                <div class="result-box" id="grok-result">
+                    <div class="result-header">
+                        <h2>Grok</h2>
+                        <div class="result-actions">
+                            <button class="copy-btn" data-target="grok">复制</button>
+                        </div>
+                    </div>
+                    <div class="content" id="grok-content">等待问题...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>使用说明</h3>
+            <ol>
+                <li>确保已打开并登录以下AI平台：
+                    <ul>
+                        <li><a href="https://chat.openai.com" target="_blank">ChatGPT</a></li>
+                        <li><a href="https://gemini.google.com" target="_blank">Gemini</a></li>
+                        <li><a href="https://kimi.moonshot.cn" target="_blank">Kimi</a></li>
+                        <li><a href="https://x.com/i/grok" target="_blank">Grok</a></li>
+                    </ul>
+                </li>
+                <li>在上方输入框中输入您的问题</li>
+                <li>点击"发送给所有AI"按钮</li>
+                <li>等待各个AI的回答并对比结果</li>
+            </ol>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+
+</html>
