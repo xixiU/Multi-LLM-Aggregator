@@ -1,0 +1,62 @@
+﻿{
+  "manifest_version": 3,
+  "name": "Multi LLM Comparator",
+  "version": "1.0.0",
+  "description": "同时向 ChatGPT、Gemini、Kimi 等发送问题并对比回答回答",
+  "icons": {
+    "128": "icons/128-ai-aggregator.png",
+    "48": "icons/48-ai-aggregator.png"
+  },
+  "permissions": [
+    "cookies",
+    "scripting",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://gemini.google.com/*",
+    "https://kimi.moonshot.cn/*",
+    "https://x.com/i/grok"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*"
+      ],
+      "js": [
+        "scripts/content_chatgpt.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://gemini.google.com/*"
+      ],
+      "js": [
+        "scripts/content_gemini.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://kimi.moonshot.cn/*"
+      ],
+      "js": [
+        "scripts/content_kimi.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://x.com/i/grok"
+      ],
+      "js": [
+        "scripts/content_grok.js"
+      ]
+    }
+  ]
+}

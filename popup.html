@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>AI Aggregator</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>AI Aggregator</h1>
+    <textarea id="prompt-input" placeholder="在此输入你的问题..."></textarea>
+    <button id="submit-button">发送给所有AI</button>
+    <div id="results-container">
+      <div class="result-box" id="chatgpt-result">
+        <h2>ChatGPT</h2>
+        <div class="content">...</div>
+      </div>
+      <div class="result-box" id="gemini-result">
+        <h2>Gemini</h2>
+        <div class="content">...</div>
+      </div>
+      <div class="result-box" id="kimi-result">
+        <h2>Kimi</h2>
+        <div class="content">...</div>
+      </div>
+      <div class="result-box" id="grok-result">
+        <h2>Grok</h2>
+        <div class="content">...</div>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+
+</html>
