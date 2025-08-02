@@ -197,6 +197,11 @@ header h1 {
     gap: 20px;
 }
 
+/* 隐藏的结果框不占用网格空间 */
+.result-box[style*="display: none"] {
+    display: none !important;
+}
+
 .result-box {
     background: white;
     border-radius: 12px;

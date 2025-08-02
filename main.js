@@ -47,8 +47,10 @@ class AIAggregator {
                 const ai = e.target.dataset.ai;
                 if (e.target.checked) {
                     this.enabledAIs.add(ai);
+                    this.showResultBox(ai);
                 } else {
                     this.enabledAIs.delete(ai);
+                    this.hideResultBox(ai);
                 }
                 this.saveSettings();
             });
@@ -113,6 +115,13 @@ class AIAggregator {
             if (toggle) {
                 toggle.checked = this.enabledAIs.has(ai);
             }
+
+            // 根据开关状态控制结果框的显示
+            if (this.enabledAIs.has(ai)) {
+                this.showResultBox(ai);
+            } else {
+                this.hideResultBox(ai);
+            }
         });
     }
 
@@ -131,12 +140,10 @@ class AIAggregator {
 
         console.log('发送问题到启用的AI:', enabledAIsList, prompt);
 
-        // 更新启用的AI的状态为加载中，禁用的AI显示为禁用状态
+        // 只更新启用的AI的状态为加载中
         this.ais.forEach(ai => {
             if (this.enabledAIs.has(ai)) {
                 this.updateContent(ai, '正在等待回答...', 'loading');
-            } else {
-                this.updateContent(ai, '该AI已禁用', 'disabled');
             }
         });
 
@@ -179,6 +186,11 @@ class AIAggregator {
     }
 
     updateContent(ai, content, className = '') {
+        // 如果AI未启用，不更新其内容
+        if (!this.enabledAIs.has(ai) && className !== '') {
+            return;
+        }
+
         const contentElement = document.getElementById(`${ai}-content`);
         const resultBox = document.getElementById(`${ai}-result`);
 
@@ -269,9 +281,28 @@ class AIAggregator {
         return html;
     }
 
+    // 显示结果框
+    showResultBox(ai) {
+        const resultBox = document.getElementById(`${ai}-result`);
+        if (resultBox) {
+            resultBox.style.display = 'block';
+            this.updateContent(ai, '等待问题...');
+        }
+    }
+
+    // 隐藏结果框
+    hideResultBox(ai) {
+        const resultBox = document.getElementById(`${ai}-result`);
+        if (resultBox) {
+            resultBox.style.display = 'none';
+        }
+    }
+
     clearResults() {
         this.ais.forEach(ai => {
-            this.updateContent(ai, '等待问题...');
+            if (this.enabledAIs.has(ai)) {
+                this.updateContent(ai, '等待问题...');
+            }
         });
         document.getElementById('prompt-input').value = '';
     }
