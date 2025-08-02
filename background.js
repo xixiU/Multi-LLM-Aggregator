@@ -95,7 +95,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     // 移除该查询
                     tabSwitchManager.activeQueries.delete(message.target);
                     tabSwitchManager.pendingQueries.delete(message.target);
-                    
+
                     chrome.runtime.sendMessage({
                         type: 'aiError',
                         source: message.target,
@@ -137,7 +137,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true; // 保持消息通道开放
     } else if (message.type === 'aiResponse') {
         console.log('Forwarding AI response:', message);
-        
+
         // 检查是否有对应的待响应查询
         const queryResponse = tabSwitchManager.pendingQueries.get(message.source);
         if (queryResponse) {
@@ -145,22 +145,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             tabSwitchManager.activeQueries.delete(message.source);
             tabSwitchManager.pendingQueries.delete(message.source);
             console.log('Query completed for:', message.source, 'Remaining queries:', tabSwitchManager.activeQueries);
-            
+
             // 等待2秒后响应，让用户看到结果
             setTimeout(() => {
                 queryResponse({ success: true, response: message.answer });
-                
+
                 // 检查是否需要切换回原来的标签页
                 scheduleTabSwitch();
             }, 2000);
         }
-        
+
         // 转发AI响应到popup
         chrome.runtime.sendMessage(message);
         return false;
     } else if (message.type === 'aiError') {
         console.log('Forwarding AI error:', message);
-        
+
         // 检查是否有对应的待响应查询
         const queryResponse = tabSwitchManager.pendingQueries.get(message.source);
         if (queryResponse) {
@@ -168,23 +168,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             tabSwitchManager.activeQueries.delete(message.source);
             tabSwitchManager.pendingQueries.delete(message.source);
             console.log('Query failed for:', message.source, 'Remaining queries:', tabSwitchManager.activeQueries);
-            
+
             queryResponse({ success: false, error: message.error });
-            
+
             // 检查是否需要切换回原来的标签页
             scheduleTabSwitch();
         }
-        
+
         // 转发AI错误到popup
         chrome.runtime.sendMessage(message);
         return false;
     }
-    
+
     // 如果是queryAI类型的消息，需要返回true表示异步响应
     if (message.type === 'queryAI') {
         return true;
     }
-    
+
     // 其他未处理的消息类型
     return false;
 });
