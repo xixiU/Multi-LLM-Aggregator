@@ -61,18 +61,18 @@ jobs:
     - name: Create ZIP file
       run: |
         cd release
-        zip -r "../Multi-LLM-Comparator-v${{ steps.version.outputs.version }}.zip" .
+        zip -r "../Multi-LLM-Aggregator-v${{ steps.version.outputs.version }}.zip" .
         cd ..
         
     - name: Create Release
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
-        files: Multi-LLM-Comparator-v${{ steps.version.outputs.version }}.zip
+        files: Multi-LLM-Aggregator-v${{ steps.version.outputs.version }}.zip
         tag_name: v${{ steps.version.outputs.version }}
         name: Release v${{ steps.version.outputs.version }}
         body: |
-          ## Multi LLM Comparator Extension v${{ steps.version.outputs.version }}
+          ## Multi LLM Aggregator Extension v${{ steps.version.outputs.version }}
           
           ### What's New
           - Automated release build
