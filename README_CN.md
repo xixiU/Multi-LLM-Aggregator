@@ -4,7 +4,7 @@
 
 [🇺🇸 English README](README.md)
 
-![操作演示](assets/demo-video.gif)
+![操作演示](assets/operation.mov)
 
 ## 📋 开发计划
 
@@ -92,8 +92,9 @@
 
 [![PayPal](https://img.shields.io/badge/PayPal-支持开发-blue?style=for-the-badge&logo=paypal)](https://paypal.me/JackYuan674)
 
-![微信捐赠](assets/wechat-qr.JPG)
 **[点击这里通过PayPal捐赠](https://paypal.me/JackYuan674)**
+
+![微信捐赠](assets/wechat-qr.JPG)
 
 您的支持将帮助我：
 
