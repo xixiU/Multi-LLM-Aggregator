@@ -4,7 +4,13 @@ A Chrome browser extension that allows you to send the same question to multiple
 
 [🇨🇳 中文版本 README](README_CN.md)
 
-![operation](https://github.com/user-attachments/assets/2e2574cf-d3a1-4ffa-9192-aef0a4e87705)
+![operation](
+
+
+https://github.com/user-attachments/assets/d80fc4a4-6594-4716-abca-38919dda00eb
+
+
+)
 
 ## 📋 Development Roadmap
 
