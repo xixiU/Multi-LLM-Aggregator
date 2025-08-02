@@ -2,11 +2,16 @@
 class AIAggregator {
     constructor() {
         this.ais = ['chatgpt', 'gemini', 'grok', 'kimi'];
+        // 默认启用的AI（ChatGPT和Gemini）
+        this.defaultEnabledAIs = ['chatgpt', 'gemini'];
+        this.enabledAIs = new Set();
         this.init();
     }
 
-    init() {
+    async init() {
+        await this.loadSettings();
         this.bindEvents();
+        this.initSwitches();
         this.checkConnections();
     }
 
@@ -34,6 +39,19 @@ class AIAggregator {
             if (e.ctrlKey && e.key === 'Enter') {
                 this.submitToAllAI();
             }
+        });
+
+        // AI开关事件
+        document.querySelectorAll('.ai-toggle').forEach(toggle => {
+            toggle.addEventListener('change', (e) => {
+                const ai = e.target.dataset.ai;
+                if (e.target.checked) {
+                    this.enabledAIs.add(ai);
+                } else {
+                    this.enabledAIs.delete(ai);
+                }
+                this.saveSettings();
+            });
         });
     }
 
@@ -65,6 +83,39 @@ class AIAggregator {
         }
     }
 
+    // 加载设置
+    async loadSettings() {
+        return new Promise((resolve) => {
+            chrome.storage.local.get(['enabledAIs'], (result) => {
+                if (result.enabledAIs) {
+                    this.enabledAIs = new Set(result.enabledAIs);
+                } else {
+                    // 使用默认设置
+                    this.enabledAIs = new Set(this.defaultEnabledAIs);
+                    this.saveSettings();
+                }
+                resolve();
+            });
+        });
+    }
+
+    // 保存设置
+    saveSettings() {
+        chrome.storage.local.set({
+            enabledAIs: Array.from(this.enabledAIs)
+        });
+    }
+
+    // 初始化开关状态
+    initSwitches() {
+        this.ais.forEach(ai => {
+            const toggle = document.getElementById(`${ai}-toggle`);
+            if (toggle) {
+                toggle.checked = this.enabledAIs.has(ai);
+            }
+        });
+    }
+
     async submitToAllAI() {
         const prompt = document.getElementById('prompt-input').value.trim();
         if (!prompt) {
@@ -72,15 +123,25 @@ class AIAggregator {
             return;
         }
 
-        console.log('发送问题到所有AI:', prompt);
+        const enabledAIsList = Array.from(this.enabledAIs);
+        if (enabledAIsList.length === 0) {
+            alert('请至少启用一个AI模型');
+            return;
+        }
 
-        // 更新所有AI的状态为加载中
+        console.log('发送问题到启用的AI:', enabledAIsList, prompt);
+
+        // 更新启用的AI的状态为加载中，禁用的AI显示为禁用状态
         this.ais.forEach(ai => {
-            this.updateContent(ai, '正在等待回答...', 'loading');
+            if (this.enabledAIs.has(ai)) {
+                this.updateContent(ai, '正在等待回答...', 'loading');
+            } else {
+                this.updateContent(ai, '该AI已禁用', 'disabled');
+            }
         });
 
-        // 发送到所有AI
-        for (const ai of this.ais) {
+        // 只发送到启用的AI
+        for (const ai of enabledAIsList) {
             try {
                 await this.sendMessage({
                     type: 'queryAI',
@@ -110,17 +171,17 @@ class AIAggregator {
         const statusElement = document.getElementById(`${ai}-status`);
         if (statusElement) {
             statusElement.textContent = message;
-            statusElement.className = `status-text ${status}`;
 
-            const statusItem = statusElement.closest('.status-item');
-            if (statusItem) {
-                statusItem.className = `status-item ${status}`;
-            }
+            // 移除旧的状态类
+            statusElement.className = statusElement.className.replace(/status-(connected|disconnected|error|disabled)/g, '');
+            statusElement.className = `status-text status-${status}`;
         }
     }
 
     updateContent(ai, content, className = '') {
         const contentElement = document.getElementById(`${ai}-content`);
+        const resultBox = document.getElementById(`${ai}-result`);
+
         if (contentElement) {
             // 检测是否需要markdown渲染
             if (this.isMarkdownContent(content)) {
@@ -136,6 +197,15 @@ class AIAggregator {
                 contentElement.textContent = content;
             }
             contentElement.className = `content ${className}`;
+
+            // 处理结果框的样式
+            if (resultBox) {
+                if (className === 'disabled') {
+                    resultBox.classList.add('disabled');
+                } else {
+                    resultBox.classList.remove('disabled');
+                }
+            }
         }
     }
 

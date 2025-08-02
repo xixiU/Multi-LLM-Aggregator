@@ -26,22 +26,47 @@
             </div>
         </div>
 
-        <div class="status-section">
-            <div class="status-grid">
-                <div class="status-item">
-                    <span class="status-label">ChatGPT:</span>
+        <div class="ai-control-section">
+            <h3>AI模型控制</h3>
+            <div class="ai-control-grid">
+                <div class="ai-control-item">
+                    <div class="ai-switch">
+                        <input type="checkbox" id="chatgpt-toggle" class="ai-toggle" data-ai="chatgpt" checked>
+                        <label for="chatgpt-toggle" class="switch-label">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <span class="ai-name">ChatGPT</span>
                     <span id="chatgpt-status" class="status-text">未连接</span>
                 </div>
-                <div class="status-item">
-                    <span class="status-label">Gemini:</span>
+                <div class="ai-control-item">
+                    <div class="ai-switch">
+                        <input type="checkbox" id="gemini-toggle" class="ai-toggle" data-ai="gemini" checked>
+                        <label for="gemini-toggle" class="switch-label">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <span class="ai-name">Gemini</span>
                     <span id="gemini-status" class="status-text">未连接</span>
                 </div>
-                <div class="status-item">
-                    <span class="status-label">Kimi:</span>
+                <div class="ai-control-item">
+                    <div class="ai-switch">
+                        <input type="checkbox" id="kimi-toggle" class="ai-toggle" data-ai="kimi">
+                        <label for="kimi-toggle" class="switch-label">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <span class="ai-name">Kimi</span>
                     <span id="kimi-status" class="status-text">未连接</span>
                 </div>
-                <div class="status-item">
-                    <span class="status-label">Grok:</span>
+                <div class="ai-control-item">
+                    <div class="ai-switch">
+                        <input type="checkbox" id="grok-toggle" class="ai-toggle" data-ai="grok">
+                        <label for="grok-toggle" class="switch-label">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <span class="ai-name">Grok</span>
                     <span id="grok-status" class="status-text">未连接</span>
                 </div>
             </div>
