@@ -4,7 +4,7 @@
 
 [🇺🇸 English README](README.md)
 
-[操作演示](https://github.com/xixiU/Multi-LLM-Comparator/raw/refs/heads/master/assets/operation.mp4)
+![操作演示](https://github.com/user-attachments/assets/2e2574cf-d3a1-4ffa-9192-aef0a4e87705)
 
 ## 📋 开发计划
 

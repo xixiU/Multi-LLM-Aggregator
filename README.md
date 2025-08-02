@@ -4,7 +4,7 @@ A Chrome browser extension that allows you to send the same question to multiple
 
 [🇨🇳 中文版本 README](README_CN.md)
 
-[operation](https://raw.githubusercontent.com/xixiU/Multi-LLM-Comparator/refs/heads/master/assets/operation.mov)
+![operation](https://github.com/user-attachments/assets/2e2574cf-d3a1-4ffa-9192-aef0a4e87705)
 
 ## 📋 Development Roadmap
 
