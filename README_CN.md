@@ -4,7 +4,7 @@
 
 [🇺🇸 English README](README.md)
 
-![操作演示](https://github.com/user-attachments/assets/2e2574cf-d3a1-4ffa-9192-aef0a4e87705)
+![操作演示](https://github.com/user-attachments/assets/d80fc4a4-6594-4716-abca-38919dda00eb)
 
 ## 📋 开发计划
 
