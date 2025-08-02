@@ -15,6 +15,7 @@ A Chrome browser extension that allows you to send the same question to multiple
 | 🔄 Internationalization | In Progress | Medium | English/Chinese language support |
 | ⏳ Kimi Integration | Pending | Medium | Full implementation needed |
 | ⏳ Grok Integration | Pending | Medium | Full implementation needed |
+| ⏳ Front-end and back-end split| Pending | Medium | Full implementation needed |
 | ⏳ Response Streaming | Pending | Low | Real-time response updates |
 | ⏳ Export Functionality | Pending | Low | Save comparisons to file |
 | ⏳ Custom AI Addition | Pending | Low | Support for more AI models |

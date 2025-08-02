@@ -85,12 +85,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                                         if (chrome.runtime.lastError) {
                                                             console.error('Failed to switch back to original tab:', chrome.runtime.lastError);
                                                         } else {
-                                                            console.log('Successfully switched back to original tab:', originalTab.id);
+                                                            console.log('Successfully ·switched back to original tab:', originalTab.id);
                                                         }
                                                     });
                                                 }
                                             });
-                                        }, 1000); // 增加到1秒确保消息发送完成
+                                        }, 2000); // 等待2秒后切换回原标签页
                                     } else {
                                         console.log('No need to switch tabs - same tab, no original tab, or extension tab');
                                     }

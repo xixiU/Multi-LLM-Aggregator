@@ -4,6 +4,8 @@
 
 [🇺🇸 English README](README.md)
 
+![操作演示](assets/demo-video.gif)
+
 ## 📋 开发计划
 
 | 功能 | 状态 | 优先级 | 备注 |
@@ -15,6 +17,7 @@
 | 🔄 国际化支持 | 进行中 | 中 | 中英文语言支持 |
 | ⏳ Kimi集成 | 待办 | 中 | 需要完整实现 |
 | ⏳ Grok集成 | 待办 | 中 | 需要完整实现 |
+| ⏳ 前后端拆分 | 待办 | 中 | 需要完整实现 |
 | ⏳ 流式响应 | 待办 | 低 | 实时响应更新 |
 | ⏳ 导出功能 | 待办 | 低 | 保存对比结果到文件 |
 | ⏳ 自定义AI | 待办 | 低 | 支持更多AI模型 |
@@ -89,6 +92,7 @@
 
 [![PayPal](https://img.shields.io/badge/PayPal-支持开发-blue?style=for-the-badge&logo=paypal)](https://paypal.me/JackYuan674)
 
+![微信捐赠](assets/wechat-qr.JPG)
 **[点击这里通过PayPal捐赠](https://paypal.me/JackYuan674)**
 
 您的支持将帮助我：

@@ -17,7 +17,16 @@ const translations = {
         'instruction-3': '点击"发送给所有AI"按钮',
         'instruction-4': '等待各个AI的回答并对比结果',
         'alert-no-question': '请输入问题',
-        'alert-no-ai-enabled': '请至少启用一个AI模型'
+        'alert-no-ai-enabled': '请至少启用一个AI模型',
+        'status-connected': '已连接',
+        'status-disconnected': '未连接',
+        'status-error': '连接失败',
+        'status-not-found': '未找到标签页',
+        'status-streaming': '生成中...',
+        'status-connection-error': '连接错误',
+        'waiting-question': '等待问题...',
+        'copy-button': '复制',
+        'waiting-answer': '正在等待回答...'
     },
     'en': {
         'title': 'AI Aggregator',
@@ -34,7 +43,16 @@ const translations = {
         'instruction-3': 'Click the "Send to All AI" button',
         'instruction-4': 'Wait for responses from each AI and compare results',
         'alert-no-question': 'Please enter a question',
-        'alert-no-ai-enabled': 'Please enable at least one AI model'
+        'alert-no-ai-enabled': 'Please enable at least one AI model',
+        'status-connected': 'Connected',
+        'status-disconnected': 'Disconnected',
+        'status-error': 'Connection Failed',
+        'status-not-found': 'Tab Not Found',
+        'status-streaming': 'Generating...',
+        'status-connection-error': 'Connection Error',
+        'waiting-question': 'Waiting for question...',
+        'copy-button': 'Copy',
+        'waiting-answer': 'Waiting for answer...'
     }
 };
 
@@ -123,10 +141,13 @@ class AIAggregator {
                     target: ai
                 });
 
-                this.updateStatus(ai, response.connected ? 'connected' : 'error', response.message);
+                const statusKey = response.connected ? 'status-connected' : 'status-not-found';
+                const statusText = translations[this.currentLanguage][statusKey];
+                this.updateStatus(ai, response.connected ? 'connected' : 'error', statusText);
             } catch (error) {
                 console.error(`检查 ${ai} 连接失败:`, error);
-                this.updateStatus(ai, 'error', '连接失败');
+                const statusText = translations[this.currentLanguage]['status-error'];
+                this.updateStatus(ai, 'error', statusText);
             }
         }
     }
@@ -228,7 +249,32 @@ class AIAggregator {
         // 更新页面标题
         document.title = lang === 'zh' ? 'AI Aggregator - 多AI模型对比工具' : 'AI Aggregator - Multi AI Model Comparison Tool';
 
+        // 更新结果框中的等待文本
+        this.updateWaitingTexts();
+
+        // 刷新连接状态以使用新语言
+        this.refreshConnectionStatus();
+
         console.log(`Language switched to: ${lang}`);
+    }
+
+    // 更新等待文本
+    updateWaitingTexts() {
+        const waitingText = translations[this.currentLanguage]['waiting-question'];
+        this.ais.forEach(ai => {
+            const contentElement = document.getElementById(`${ai}-content`);
+            if (contentElement && (contentElement.textContent.includes('等待问题') || contentElement.textContent.includes('Waiting for question'))) {
+                contentElement.textContent = waitingText;
+            }
+        });
+    }
+
+    // 刷新连接状态显示
+    refreshConnectionStatus() {
+        // 重新检查连接状态以更新状态文本语言
+        setTimeout(() => {
+            this.checkConnections();
+        }, 100);
     }
 
     async submitToAllAI() {
@@ -249,7 +295,7 @@ class AIAggregator {
         // 只更新启用的AI的状态为加载中
         this.ais.forEach(ai => {
             if (this.enabledAIs.has(ai)) {
-                this.updateContent(ai, '正在等待回答...', 'loading');
+                this.updateContent(ai, translations[this.currentLanguage]['waiting-answer'], 'loading');
             }
         });
 
@@ -392,7 +438,7 @@ class AIAggregator {
         const resultBox = document.getElementById(`${ai}-result`);
         if (resultBox) {
             resultBox.style.display = 'block';
-            this.updateContent(ai, '等待问题...');
+            this.updateContent(ai, translations[this.currentLanguage]['waiting-question']);
         }
     }
 
@@ -407,7 +453,7 @@ class AIAggregator {
     clearResults() {
         this.ais.forEach(ai => {
             if (this.enabledAIs.has(ai)) {
-                this.updateContent(ai, '等待问题...');
+                this.updateContent(ai, translations[this.currentLanguage]['waiting-question']);
             }
         });
         document.getElementById('prompt-input').value = '';
@@ -415,7 +461,8 @@ class AIAggregator {
 
     async copyResult(ai) {
         const contentElement = document.getElementById(`${ai}-content`);
-        if (contentElement && contentElement.textContent.trim() !== '等待问题...') {
+        const waitingText = translations[this.currentLanguage]['waiting-question'];
+        if (contentElement && contentElement.textContent.trim() !== waitingText) {
             try {
                 await navigator.clipboard.writeText(contentElement.textContent);
 
@@ -445,14 +492,17 @@ class AIAggregator {
                 // 支持流式更新
                 if (message.isStreaming) {
                     this.updateContent(message.source, message.answer, 'streaming');
-                    this.updateStatus(message.source, 'streaming', '生成中...');
+                    const statusText = translations[this.currentLanguage]['status-streaming'];
+                    this.updateStatus(message.source, 'streaming', statusText);
                 } else {
                     this.updateContent(message.source, message.answer);
-                    this.updateStatus(message.source, 'connected', '已连接');
+                    const statusText = translations[this.currentLanguage]['status-connected'];
+                    this.updateStatus(message.source, 'connected', statusText);
                 }
             } else if (message.type === 'aiError') {
                 this.updateContent(message.source, `错误：${message.error}`, 'error');
-                this.updateStatus(message.source, 'error', '连接错误');
+                const statusText = translations[this.currentLanguage]['status-connection-error'];
+                this.updateStatus(message.source, 'error', statusText);
             }
         });
     }

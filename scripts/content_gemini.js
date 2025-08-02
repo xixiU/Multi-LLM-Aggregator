@@ -143,15 +143,12 @@ if (window.geminiContentScriptLoaded) {
         if (currentContent && currentContent !== lastContent && currentContent.length > 5) {
           lastContent = currentContent;
 
-          // 检查是否还在生成中
-          const isGenerating = document.querySelector('.loading, .spinner, div[class*="thinking"], div[class*="generating"]') ||
-            currentContent.endsWith('...') ||
-            currentContent.endsWith('▋') ||
-            currentContent.endsWith('|') ||
-            currentContent.includes('正在思考') ||
-            currentContent.includes('生成中');
+          // 检查是否还在生成中：检测是否存在停止按钮
+          const stopIcon = document.querySelector('mat-icon[fonticon="stop"], mat-icon[data-mat-icon-name="stop"]');
+          const isGenerating = !!stopIcon;
 
           console.log(`Gemini: 是否还在生成: ${isGenerating}`);
+          console.log(`Gemini: 停止按钮存在: ${!!stopIcon}`);
 
           if (!isGenerating && !hasResponse) {
             hasResponse = true;
