@@ -93,23 +93,24 @@ if (window.geminiContentScriptLoaded) {
 
   function observeResponse() {
     console.log('Gemini: 开始监听回答...');
-    let hasResponse = false;
-    let lastContent = '';
+    let hasCompletedOnce = false; // 防止重复发送完成消息
+    let lastSentContent = '';
+    let updateTimer = null;
 
     const observer = new MutationObserver((mutations, obs) => {
-      // 更新的Gemini回答选择器 - 基于最新的页面结构
+      // 更精确的Gemini回答选择器，避免抓取侧边栏
       const selectors = [
-        // 最新的Gemini回答选择器
-        'message-content .markdown',
-        'message-content',
-        '.model-response-text',
-        'div[data-testid*="conversation-turn"] .markdown',
-        'div[data-testid*="conversation-turn"]',
-        '[class*="model-response"]',
-        '[class*="response-content"]',
-        // 兜底选择器
-        '.markdown:last-of-type',
-        'div[class*="conversation"]:last-child div:not([class*="input"])',
+        // 优先使用最精确的选择器，避免抓取侧边栏内容
+        'model-response[data-model-slug] .model-response-text',
+        'message-content[data-testid*="conversation-turn-"] .markdown',
+        'message-content:not([class*="sidebar"]) .markdown',
+        'div[data-testid*="conversation-turn"]:last-child .markdown',
+        'div[data-testid*="conversation-turn"]:last-child message-content',
+        // 确保不会选择侧边栏内容
+        'main message-content .markdown:not([class*="sidebar"]):not([class*="navigation"])',
+        'main div[class*="conversation-turn"]:last-child .response',
+        // 兜底选择器，但要排除侧边栏
+        '.markdown:not([class*="sidebar"]):not([class*="nav"]):last-of-type'
       ];
 
       let responseElement = null;
@@ -118,47 +119,71 @@ if (window.geminiContentScriptLoaded) {
       for (const selector of selectors) {
         const elements = document.querySelectorAll(selector);
         if (elements.length > 0) {
-          // 取最后一个元素，通常是最新的回答
-          responseElement = elements[elements.length - 1];
-          const content = responseElement.innerText.trim();
+          // 过滤掉可能的侧边栏元素
+          const filteredElements = Array.from(elements).filter(el => {
+            const rect = el.getBoundingClientRect();
+            const parentClasses = el.closest('[class*="sidebar"], [class*="navigation"], [class*="tab"]');
+            // 排除明显是侧边栏的元素（位置、父容器等）
+            return !parentClasses && rect.width > 200; // 侧边栏通常较窄
+          });
 
-          console.log(`Gemini: 尝试选择器 ${selector}, 找到 ${elements.length} 个元素, 内容长度: ${content.length}`);
-          console.log(`Gemini: 内容预览: "${content.substring(0, 100)}..."`);
+          if (filteredElements.length > 0) {
+            responseElement = filteredElements[filteredElements.length - 1];
+            const content = extractCleanText(responseElement);
 
-          if (content.length > 5) { // 降低长度要求
-            foundSelector = selector;
-            break;
+            console.log(`Gemini: 尝试选择器 ${selector}, 找到 ${filteredElements.length} 个有效元素, 内容长度: ${content.length}`);
+            console.log(`Gemini: 内容预览: "${content.substring(0, 100)}..."`);
+
+            if (content.length > 10) {
+              foundSelector = selector;
+              break;
+            }
           }
         }
       }
 
       if (responseElement && foundSelector) {
-        const currentContent = responseElement.innerText.trim();
+        const currentContent = extractCleanText(responseElement);
 
         console.log(`Gemini: 使用选择器找到回答: ${foundSelector}`);
         console.log(`Gemini: 当前内容长度: ${currentContent.length}`);
-        console.log(`Gemini: 内容: "${currentContent.substring(0, 200)}..."`);
 
-        // 检查内容是否有实质性变化
-        if (currentContent && currentContent !== lastContent && currentContent.length > 5) {
-          lastContent = currentContent;
+        // 实现流式更新，类似ChatGPT
+        if (currentContent &&
+          currentContent.trim() !== '' &&
+          currentContent !== lastSentContent &&
+          currentContent.length > lastSentContent.length) {
+          lastSentContent = currentContent;
 
-          // 检查是否还在生成中：检测是否存在停止按钮
-          const stopIcon = document.querySelector('mat-icon[fonticon="stop"], mat-icon[data-mat-icon-name="stop"]');
-          const isGenerating = !!stopIcon;
-
-          console.log(`Gemini: 是否还在生成: ${isGenerating}`);
-          console.log(`Gemini: 停止按钮存在: ${!!stopIcon}`);
-
-          if (!isGenerating && !hasResponse) {
-            hasResponse = true;
-            console.log('Gemini: 检测到回答完成，发送结果');
-            sendResult(currentContent);
-            obs.disconnect();
-          } else if (!hasResponse) {
-            // 如果还在生成，等待一下再检查
-            console.log('Gemini: 回答还在生成中，继续等待...');
+          // 使用防抖，避免过于频繁的更新
+          if (updateTimer) {
+            clearTimeout(updateTimer);
           }
+          updateTimer = setTimeout(() => {
+            console.log('Gemini: 发送流式更新，内容长度:', currentContent.length);
+            sendStreamingResult(currentContent, false); // false 表示还在生成中
+          }, 300); // 防抖延迟
+        }
+
+        // 检查是否还在生成中：检测停止按钮
+        const stopButton = document.querySelector('button[aria-label*="Stop"], button[title*="Stop"], mat-icon[fonticon="stop"], mat-icon[data-mat-icon-name="stop"], [class*="stop-generating"]');
+        const isGenerating = !!stopButton;
+
+        console.log(`Gemini: 是否还在生成: ${isGenerating}`);
+
+        // 如果停止生成且还没有发送完成消息
+        if (!isGenerating && !hasCompletedOnce) {
+          hasCompletedOnce = true;
+          console.log('Gemini: 检测到回答完成，发送最终结果');
+
+          if (updateTimer) {
+            clearTimeout(updateTimer);
+          }
+
+          if (currentContent && currentContent.trim() !== '') {
+            sendStreamingResult(currentContent, true); // true 表示已完成
+          }
+          obs.disconnect();
         }
       } else {
         console.log('Gemini: 未找到回答元素');
@@ -171,21 +196,23 @@ if (window.geminiContentScriptLoaded) {
       characterData: true
     });
 
-    // 增加超时时间，并提供更好的错误处理
+    // 设置超时处理
     setTimeout(() => {
+      console.log('Gemini: 响应监听超时，尝试获取最终内容');
       observer.disconnect();
+      if (updateTimer) {
+        clearTimeout(updateTimer);
+      }
 
-      if (!hasResponse) {
-        console.log('Gemini: 超时，尝试最后一次获取回答');
-
+      if (!hasCompletedOnce) {
         // 最后尝试获取任何看起来像回答的内容
         const allSelectors = [
+          'message-content .markdown',
           'message-content',
-          '.markdown',
-          'div[class*="conversation"]',
-          'div[class*="message"]',
-          'div[class*="response"]',
-          'div[data-testid*="turn"]'
+          '.markdown:not([class*="sidebar"])',
+          'div[class*="conversation"]:last-child',
+          'div[class*="message"]:last-child',
+          'div[class*="response"]:last-child'
         ];
 
         let finalResponse = '';
@@ -193,9 +220,14 @@ if (window.geminiContentScriptLoaded) {
 
         for (const selector of allSelectors) {
           const elements = document.querySelectorAll(selector);
-          for (const element of elements) {
-            const text = element.innerText.trim();
-            if (text && text.length > finalResponse.length && text.length > 5) {
+          const filteredElements = Array.from(elements).filter(el => {
+            const parentClasses = el.closest('[class*="sidebar"], [class*="navigation"], [class*="tab"]');
+            return !parentClasses && el.getBoundingClientRect().width > 200;
+          });
+
+          for (const element of filteredElements) {
+            const text = extractCleanText(element);
+            if (text && text.length > finalResponse.length && text.length > 10) {
               finalResponse = text;
               finalSelector = selector;
             }
@@ -204,13 +236,96 @@ if (window.geminiContentScriptLoaded) {
 
         console.log(`Gemini: 最终尝试找到内容，选择器: ${finalSelector}, 长度: ${finalResponse.length}`);
 
-        if (finalResponse && finalResponse.length > 5) {
-          sendResult(finalResponse);
+        if (finalResponse && finalResponse.trim() !== '') {
+          sendStreamingResult(finalResponse, true);
         } else {
           sendResult("错误：Gemini 回答超时或未能抓取到内容。请检查页面是否正常工作。");
         }
       }
-    }, 45000); // 45秒超时
+    }, 30000); // 30秒超时，与ChatGPT一致
+  }
+
+  // 智能提取干净的文本内容（参考ChatGPT实现）
+  function extractCleanText(element) {
+    if (!element) {
+      console.log('Gemini: extractCleanText 收到空元素');
+      return '';
+    }
+
+    console.log('Gemini: 开始提取内容，元素类型:', element.tagName, '内容预览:', element.textContent.substring(0, 100));
+
+    // 创建一个元素的副本来处理
+    const clonedElement = element.cloneNode(true);
+
+    // 移除按钮容器，但保留内容区域
+    const buttonsToRemove = clonedElement.querySelectorAll('button, [aria-label*="复制"], [aria-label*="编辑"], [aria-label*="Copy"], [aria-label*="Edit"]');
+    buttonsToRemove.forEach(el => el.remove());
+
+    // 移除代码块顶部的语言标签栏
+    const langLabels = clonedElement.querySelectorAll('.flex.items-center, .language-label, .code-header');
+    langLabels.forEach(label => label.remove());
+
+    // 移除悬浮的工具栏
+    const floatingToolbars = clonedElement.querySelectorAll('.sticky, .absolute, .floating-toolbar');
+    floatingToolbars.forEach(toolbar => toolbar.remove());
+
+    // 获取清理后的文本
+    const rawText = clonedElement.innerText || clonedElement.textContent || '';
+
+    // 进一步清理文本
+    const cleanedText = cleanResponseText(rawText);
+    console.log('Gemini: 清理后的内容长度:', cleanedText.length, '预览:', cleanedText.substring(0, 100));
+    return cleanedText;
+  }
+
+  // 清理响应文本，去掉按钮文本和多余内容
+  function cleanResponseText(text) {
+    // 常见的按钮文本模式
+    const buttonTexts = [
+      '复制', 'Copy', '编辑', 'Edit', '朗读', 'Read aloud',
+      '复制代码', 'Copy code', '查看代码', 'View code',
+      '运行', 'Run', '测试', 'Test', '下载', 'Download',
+      '重新生成', 'Regenerate', '最佳回复', '错误回复',
+      '共享', 'Share', '展开', 'Expand', '收起', 'Collapse',
+      'bash', 'python', 'javascript', 'css', 'html', 'sql', 'json', 'xml'
+    ];
+
+    let cleanedText = text;
+
+    // 去掉按钮文本
+    buttonTexts.forEach(buttonText => {
+      const regex = new RegExp(`(^|\\s|\\n)${buttonText}(\\s|\\n|$)`, 'gi');
+      cleanedText = cleanedText.replace(regex, '$1$2');
+    });
+
+    // 特殊处理：去掉代码块语言标签行
+    cleanedText = cleanedText.replace(/^(bash|python|javascript|css|html|sql|json|xml|typescript|java|cpp|c\+\+)$/gim, '');
+
+    // 清理多余的空白符和换行
+    cleanedText = cleanedText
+      .replace(/\n\s*\n\s*\n+/g, '\n\n') // 减少多个连续换行
+      .replace(/[ \t]+/g, ' ') // 将多个空格/制表符合并为一个空格
+      .replace(/\n[ \t]+/g, '\n') // 去掉行开头的空格/制表符
+      .replace(/[ \t]+\n/g, '\n') // 去掉行末尾的空格/制表符
+      .replace(/^\s+|\s+$/g, '') // 去掉开头和结尾的空白符
+      .trim();
+
+    return cleanedText;
+  }
+
+  // 发送流式结果回后台
+  function sendStreamingResult(text, isComplete) {
+    console.log('Gemini: 准备发送消息到background，isComplete:', isComplete, '内容预览:', text.substring(0, 50));
+
+    chrome.runtime.sendMessage({
+      type: 'aiResponse',
+      source: 'gemini',
+      answer: text,
+      isStreaming: !isComplete,
+      isComplete: isComplete
+    });
+
+    console.log('Gemini: 消息已发送，isComplete:', isComplete);
   }
 
   function sendResult(text) {
