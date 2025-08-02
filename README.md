@@ -4,7 +4,7 @@ A Chrome browser extension that allows you to send the same question to multiple
 
 [🇨🇳 中文版本 README](README_CN.md)
 
-https://github.com/user-attachments/assets/d80fc4a4-6594-4716-abca-38919dda00eb
+<https://github.com/user-attachments/assets/d80fc4a4-6594-4716-abca-38919dda00eb>
 
 ## 📋 Development Roadmap
 
@@ -86,18 +86,18 @@ If the extension doesn't work properly, follow these debugging steps:
 - **Popup Interface**: Main user interface in a new tab
 - **Storage API**: Saves user preferences and AI toggle states
 
-## 支持开发者
+## Support the Developer
 
-如果这个扩展对您有帮助，欢迎通过PayPal支持我的开发工作：
+If this extension is helpful to you, please consider supporting my development work through PayPal:
 
-[![PayPal](https://img.shields.io/badge/PayPal-支持开发-blue?style=for-the-badge&logo=paypal)](https://paypal.me/JackYuan674)
+[![PayPal](https://img.shields.io/badge/PayPal-Support%20Development-blue?style=for-the-badge&logo=paypal)](https://paypal.me/JackYuan674)
 
-**[点击这里通过PayPal捐赠](https://paypal.me/JackYuan674)**
+**[Click here to donate via PayPal](https://paypal.me/JackYuan674)**
 
-您的支持将帮助我：
+Your support will help me:
 
-- 持续维护和改进此扩展
-- 适配新的AI平台和功能更新
-- 开发更多有用的工具
+- Continuously maintain and improve this extension
+- Adapt to new AI platforms and feature updates
+- Develop more useful tools
 
-感谢您的支持和使用！🙏
+Thank you for your support and usage! 🙏
