@@ -4,7 +4,7 @@
 
 [🇺🇸 English README](README.md)
 
-![操作演示](assets/operation.mov)
+![操作演示](assets/operation.mp4)
 
 ## 📋 开发计划
 
