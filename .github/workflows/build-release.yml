@@ -54,13 +54,13 @@ jobs:
     - name: Create ZIP file
       run: |
         cd release
-        zip -r "../ai-aggregator-v${{ steps.version.outputs.version }}.zip" .
+        zip -r "../Multi-LLM-Comparator-v${{ steps.version.outputs.version }}.zip" .
         cd ..
         
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        files: ai-aggregator-v${{ steps.version.outputs.version }}.zip
+        files: Multi-LLM-Comparator-v${{ steps.version.outputs.version }}.zip
         tag_name: v${{ steps.version.outputs.version }}
         name: Release v${{ steps.version.outputs.version }}
         body: |
