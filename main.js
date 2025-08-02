@@ -1,10 +1,50 @@
 // 主页面JavaScript逻辑
+
+// 语言数据
+const translations = {
+    'zh': {
+        'title': 'AI Aggregator',
+        'subtitle': '同时向多个AI模型发送问题并对比回答',
+        'switch-lang': 'EN',
+        'input-label': '输入您的问题：',
+        'input-placeholder': '在此输入您想要询问的问题...',
+        'send-button': '发送给所有AI',
+        'clear-button': '清空结果',
+        'ai-control-title': 'AI模型控制',
+        'instructions-title': '使用说明',
+        'instruction-1': '确保已打开并登录以下AI平台：',
+        'instruction-2': '在上方输入框中输入您的问题',
+        'instruction-3': '点击"发送给所有AI"按钮',
+        'instruction-4': '等待各个AI的回答并对比结果',
+        'alert-no-question': '请输入问题',
+        'alert-no-ai-enabled': '请至少启用一个AI模型'
+    },
+    'en': {
+        'title': 'AI Aggregator',
+        'subtitle': 'Send questions to multiple AI models simultaneously and compare responses',
+        'switch-lang': '中文',
+        'input-label': 'Enter your question:',
+        'input-placeholder': 'Type your question here...',
+        'send-button': 'Send to All AI',
+        'clear-button': 'Clear Results',
+        'ai-control-title': 'AI Model Controls',
+        'instructions-title': 'Instructions',
+        'instruction-1': 'Make sure the following AI platforms are open and logged in:',
+        'instruction-2': 'Enter your question in the input box above',
+        'instruction-3': 'Click the "Send to All AI" button',
+        'instruction-4': 'Wait for responses from each AI and compare results',
+        'alert-no-question': 'Please enter a question',
+        'alert-no-ai-enabled': 'Please enable at least one AI model'
+    }
+};
+
 class AIAggregator {
     constructor() {
         this.ais = ['chatgpt', 'gemini', 'grok', 'kimi'];
         // 默认启用的AI（ChatGPT和Gemini）
         this.defaultEnabledAIs = ['chatgpt', 'gemini'];
         this.enabledAIs = new Set();
+        this.currentLanguage = 'zh'; // 默认中文
         this.init();
     }
 
@@ -12,6 +52,7 @@ class AIAggregator {
         await this.loadSettings();
         this.bindEvents();
         this.initSwitches();
+        this.initLanguage();
         this.checkConnections();
     }
 
@@ -55,6 +96,11 @@ class AIAggregator {
                 this.saveSettings();
             });
         });
+
+        // 语言切换事件
+        document.getElementById('lang-toggle').addEventListener('click', () => {
+            this.toggleLanguage();
+        });
     }
 
     async checkConnections() {
@@ -88,14 +134,18 @@ class AIAggregator {
     // 加载设置
     async loadSettings() {
         return new Promise((resolve) => {
-            chrome.storage.local.get(['enabledAIs'], (result) => {
+            chrome.storage.local.get(['enabledAIs', 'language'], (result) => {
                 if (result.enabledAIs) {
                     this.enabledAIs = new Set(result.enabledAIs);
                 } else {
                     // 使用默认设置
                     this.enabledAIs = new Set(this.defaultEnabledAIs);
-                    this.saveSettings();
                 }
+
+                // 加载语言设置
+                this.currentLanguage = result.language || 'zh';
+
+                this.saveSettings();
                 resolve();
             });
         });
@@ -104,7 +154,8 @@ class AIAggregator {
     // 保存设置
     saveSettings() {
         chrome.storage.local.set({
-            enabledAIs: Array.from(this.enabledAIs)
+            enabledAIs: Array.from(this.enabledAIs),
+            language: this.currentLanguage
         });
     }
 
@@ -125,16 +176,71 @@ class AIAggregator {
         });
     }
 
+    // 初始化语言设置
+    initLanguage() {
+        this.updateLanguage();
+    }
+
+    // 切换语言
+    toggleLanguage() {
+        this.currentLanguage = this.currentLanguage === 'zh' ? 'en' : 'zh';
+        this.updateLanguage();
+        this.saveSettings();
+    }
+
+    // 更新界面语言
+    updateLanguage() {
+        const lang = this.currentLanguage;
+        const langData = translations[lang];
+
+        if (!langData) return;
+
+        // 更新所有带有 data-i18n 属性的元素
+        document.querySelectorAll('[data-i18n]').forEach(element => {
+            const key = element.getAttribute('data-i18n');
+            if (langData[key]) {
+                element.textContent = langData[key];
+            }
+        });
+
+        // 更新placeholder属性
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+            const key = element.getAttribute('data-i18n-placeholder');
+            if (langData[key]) {
+                element.placeholder = langData[key];
+            }
+        });
+
+        // 更新语言切换按钮
+        const currentLangSpan = document.getElementById('current-lang');
+        const langTextSpan = document.querySelector('.lang-text');
+
+        if (currentLangSpan && langTextSpan) {
+            if (lang === 'zh') {
+                currentLangSpan.textContent = '🇨🇳';
+                langTextSpan.textContent = langData['switch-lang'];
+            } else {
+                currentLangSpan.textContent = '🇺🇸';
+                langTextSpan.textContent = langData['switch-lang'];
+            }
+        }
+
+        // 更新页面标题
+        document.title = lang === 'zh' ? 'AI Aggregator - 多AI模型对比工具' : 'AI Aggregator - Multi AI Model Comparison Tool';
+
+        console.log(`Language switched to: ${lang}`);
+    }
+
     async submitToAllAI() {
         const prompt = document.getElementById('prompt-input').value.trim();
         if (!prompt) {
-            alert('请输入问题');
+            alert(translations[this.currentLanguage]['alert-no-question']);
             return;
         }
 
         const enabledAIsList = Array.from(this.enabledAIs);
         if (enabledAIsList.length === 0) {
-            alert('请至少启用一个AI模型');
+            alert(translations[this.currentLanguage]['alert-no-ai-enabled']);
             return;
         }
 

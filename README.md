@@ -1,58 +1,87 @@
 # Multi LLM Comparator Chrome Extension
 
-这是一个 Chrome 浏览器扩展，可在你已打开并登录的 ChatGPT、Gemini、Kimi 页面上发送同一问题，实时返回并对比多个模型的答案。
+A Chrome browser extension that allows you to send the same question to multiple AI models (ChatGPT, Gemini, Kimi, Grok) simultaneously and compare their responses in real-time.
 
-## 使用方法
+[🇨🇳 中文版本 README](README_CN.md)
 
-1. 克隆或解压此项目。
-2. 打开 Chrome，进入 `chrome://extensions`。
-3. 开启「开发者模式」。
-4. 点击「加载已解压的扩展程序」，选择本目录。
-5. 保持以下页面已登录并打开：
+## 📋 Development Roadmap
+
+| Feature | Status | Priority | Notes |
+|---------|--------|----------|-------|
+| ✅ Basic AI Integration | Completed | High | ChatGPT, Gemini, Kimi, Grok |
+| ✅ AI Toggle Controls | Completed | High | Enable/disable individual AIs |
+| ✅ Dynamic Result Display | Completed | High | Show/hide based on enabled AIs |
+| 🔄 Gemini Script Optimization | In Progress | High | Improving response capture |
+| 🔄 Internationalization | In Progress | Medium | English/Chinese language support |
+| ⏳ Kimi Integration | Pending | Medium | Full implementation needed |
+| ⏳ Grok Integration | Pending | Medium | Full implementation needed |
+| ⏳ Response Streaming | Pending | Low | Real-time response updates |
+| ⏳ Export Functionality | Pending | Low | Save comparisons to file |
+| ⏳ Custom AI Addition | Pending | Low | Support for more AI models |
+
+**Legend:** ✅ Completed | 🔄 In Progress | ⏳ Pending
+
+## 🚀 Quick Start
+
+1. Clone or download this project
+2. Open Chrome and navigate to `chrome://extensions`
+3. Enable "Developer mode"
+4. Click "Load unpacked" and select the project directory
+5. Make sure the following AI platforms are logged in and accessible:
    - [ChatGPT](https://chat.openai.com)
    - [Gemini](https://gemini.google.com)
    - [Kimi](https://kimi.moonshot.cn)
    - [Grok](https://x.com/i/grok)
-6. 点击浏览器扩展图标，将自动在新标签页中打开主界面。
-7. 在主界面中输入问题，点击「发送给所有AI」即可获取多模型回答。
+6. Click the extension icon to open the main interface in a new tab
+7. Enter your question and click "Send to All AI" to get responses from multiple models
 
-## 新功能
+## ✨ Features
 
-- **大界面**：在新标签页中打开，提供更大的操作空间
-- **实时状态**：显示各个AI平台的连接状态
-- **一键复制**：点击复制按钮可快速复制AI回答
-- **快捷键**：Ctrl+Enter 快速发送问题
-- **清空功能**：一键清空所有结果
+- **Large Interface**: Opens in a new tab for better user experience
+- **Real-time Status**: Shows connection status for each AI platform
+- **AI Toggle Controls**: Enable/disable individual AI models
+- **One-click Copy**: Easily copy AI responses
+- **Keyboard Shortcuts**: Ctrl+Enter to send questions quickly
+- **Clear Results**: One-click to clear all responses
+- **Responsive Design**: Works on different screen sizes
 
-## 注意事项
+## ⚠️ Important Notes
 
-- 确保所有AI页面已登录并允许扩展注入内容脚本。
-- 可自行修改监听逻辑提升准确性或适配后续模型更新。
+- Ensure all AI pages are logged in and allow extension content script injection
+- You can modify the monitoring logic to improve accuracy or adapt to future model updates
+- The extension requires proper permissions to interact with AI websites
 
-## 调试方法
+## 🔧 Troubleshooting
 
-如果扩展无法正常工作，可以按以下步骤调试：
+If the extension doesn't work properly, follow these debugging steps:
 
-1. **检查标签页**：确保已打开并登录以下页面：
+1. **Check Tabs**: Make sure the following pages are open and logged in:
    - [ChatGPT](https://chat.openai.com)
    - [Gemini](https://gemini.google.com)
    - [Kimi](https://kimi.moonshot.cn)
    - [Grok](https://x.com/i/grok)
 
-2. **查看控制台日志**：
-   - 打开Chrome开发者工具 (F12)
-   - 在扩展管理页面 (`chrome://extensions/`) 点击"检查视图"
-   - 查看Console标签页的日志信息
+2. **Check Console Logs**:
+   - Open Chrome Developer Tools (F12)
+   - Go to Extensions page (`chrome://extensions/`) and click "Inspect views"
+   - Check the Console tab for log information
 
-3. **测试选择器**：
-   - 在任意AI页面打开开发者工具
-   - 在Console中运行：`copy(debugSelectors())`
-   - 查看选择器是否能找到正确的元素
+3. **Test Selectors**:
+   - Open Developer Tools on any AI page
+   - Run in Console: `copy(debugSelectors())`
+   - Check if selectors can find the correct elements
 
-4. **常见问题**：
-   - 如果显示"找不到标签页"，请确保URL完全匹配
-   - 如果显示"选择器失效"，请检查页面结构是否发生变化
-   - 如果显示"无法注入脚本"，请检查扩展权限设置
+4. **Common Issues**:
+   - If "Tab not found" appears, ensure URLs match exactly
+   - If "Selector failed" appears, check if page structure has changed
+   - If "Cannot inject script" appears, check extension permissions
+
+## 🏗️ Technical Architecture
+
+- **Background Script**: Manages tab communication and script injection
+- **Content Scripts**: Interact with each AI platform's interface
+- **Popup Interface**: Main user interface in a new tab
+- **Storage API**: Saves user preferences and AI toggle states
 
 ## 支持开发者
 

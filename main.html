@@ -11,23 +11,34 @@
 <body>
     <div class="container">
         <header>
-            <h1>AI Aggregator</h1>
-            <p class="subtitle">同时向多个AI模型发送问题并对比回答</p>
+            <div class="header-content">
+                <div class="title-section">
+                    <h1 data-i18n="title">AI Aggregator</h1>
+                    <p class="subtitle" data-i18n="subtitle">同时向多个AI模型发送问题并对比回答</p>
+                </div>
+                <div class="language-selector">
+                    <button id="lang-toggle" class="lang-btn">
+                        <span id="current-lang">🇨🇳</span>
+                        <span class="lang-text" data-i18n="switch-lang">EN</span>
+                    </button>
+                </div>
+            </div>
         </header>
 
         <div class="input-section">
             <div class="input-group">
-                <label for="prompt-input">输入您的问题：</label>
-                <textarea id="prompt-input" placeholder="在此输入您想要询问的问题..."></textarea>
+                <label for="prompt-input" data-i18n="input-label">输入您的问题：</label>
+                <textarea id="prompt-input" data-i18n-placeholder="input-placeholder"
+                    placeholder="在此输入您想要询问的问题..."></textarea>
             </div>
             <div class="button-group">
-                <button id="submit-button" class="primary-btn">发送给所有AI</button>
-                <button id="clear-button" class="secondary-btn">清空结果</button>
+                <button id="submit-button" class="primary-btn" data-i18n="send-button">发送给所有AI</button>
+                <button id="clear-button" class="secondary-btn" data-i18n="clear-button">清空结果</button>
             </div>
         </div>
 
         <div class="ai-control-section">
-            <h3>AI模型控制</h3>
+            <h3 data-i18n="ai-control-title">AI模型控制</h3>
             <div class="ai-control-grid">
                 <div class="ai-control-item">
                     <div class="ai-switch">
@@ -119,9 +130,9 @@
         </div>
 
         <div class="instructions">
-            <h3>使用说明</h3>
+            <h3 data-i18n="instructions-title">使用说明</h3>
             <ol>
-                <li>确保已打开并登录以下AI平台：
+                <li data-i18n="instruction-1">确保已打开并登录以下AI平台：
                     <ul>
                         <li><a href="https://chat.openai.com" target="_blank">ChatGPT</a></li>
                         <li><a href="https://gemini.google.com" target="_blank">Gemini</a></li>
@@ -129,9 +140,9 @@
                         <li><a href="https://x.com/i/grok" target="_blank">Grok</a></li>
                     </ul>
                 </li>
-                <li>在上方输入框中输入您的问题</li>
-                <li>点击"发送给所有AI"按钮</li>
-                <li>等待各个AI的回答并对比结果</li>
+                <li data-i18n="instruction-2">在上方输入框中输入您的问题</li>
+                <li data-i18n="instruction-3">点击"发送给所有AI"按钮</li>
+                <li data-i18n="instruction-4">等待各个AI的回答并对比结果</li>
             </ol>
         </div>
     </div>
