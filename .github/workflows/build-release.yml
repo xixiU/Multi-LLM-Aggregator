@@ -1,0 +1,90 @@
+name: Build and Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送v开头的标签时触发
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Get version from manifest
+      id: version
+      run: |
+        VERSION=$(node -p "require('./manifest.json').version")
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Extension version: $VERSION"
+        
+    - name: Create release directory
+      run: |
+        mkdir -p release
+        
+    - name: Copy files to release directory
+      run: |
+        # 复制主要文件
+        cp manifest.json release/
+        cp background.js release/
+        cp main.js release/
+        cp main.html release/
+        cp main.css release/
+        cp popup.html release/
+        cp popup.js release/
+        cp popup.css release/
+        
+        # 复制目录
+        cp -r scripts/ release/
+        cp -r icons/ release/
+        cp -r assets/ release/
+        
+        # 复制README文件
+        cp README.md release/
+        cp README_CN.md release/
+        
+    - name: Create ZIP file
+      run: |
+        cd release
+        zip -r "../ai-aggregator-v${{ steps.version.outputs.version }}.zip" .
+        cd ..
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ai-aggregator-v${{ steps.version.outputs.version }}.zip
+        tag_name: v${{ steps.version.outputs.version }}
+        name: Release v${{ steps.version.outputs.version }}
+        body: |
+          ## Multi LLM Comparator Extension v${{ steps.version.outputs.version }}
+          
+          ### What's New
+          - Automated release build
+          - Extension package ready for installation
+          
+          ### Installation
+          1. Download the ZIP file
+          2. Extract to a folder
+          3. Open Chrome and go to `chrome://extensions/`
+          4. Enable "Developer mode"
+          5. Click "Load unpacked" and select the extracted folder
+          
+          ### Features
+          - Compare responses from ChatGPT, Gemini, Kimi, and Grok
+          - Real-time streaming updates
+          - Toggle individual AI models
+          - Copy responses with one click
+          
+          ### Requirements
+          - Chrome browser
+          - Logged in accounts on AI platforms
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
