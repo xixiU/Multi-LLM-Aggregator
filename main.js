@@ -312,7 +312,7 @@ class AIAggregator {
                 currentIndex++;
 
                 // 2秒后切换到下一个tab
-                setTimeout(switchToNextTab, 2000);
+                setTimeout(switchToNextTab, 5000);
             } else {
                 // 所有AI tab都看过了，2秒后回到AI Aggregator
                 console.log('All AI tabs viewed, returning to AI Aggregator');
