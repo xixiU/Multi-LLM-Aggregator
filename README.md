@@ -53,3 +53,19 @@
    - 如果显示"找不到标签页"，请确保URL完全匹配
    - 如果显示"选择器失效"，请检查页面结构是否发生变化
    - 如果显示"无法注入脚本"，请检查扩展权限设置
+
+## 支持开发者
+
+如果这个扩展对您有帮助，欢迎通过PayPal支持我的开发工作：
+
+[![PayPal](https://img.shields.io/badge/PayPal-支持开发-blue?style=for-the-badge&logo=paypal)](https://paypal.me/JackYuan674)
+
+**[点击这里通过PayPal捐赠](https://paypal.me/JackYuan674)**
+
+您的支持将帮助我：
+
+- 持续维护和改进此扩展
+- 适配新的AI平台和功能更新
+- 开发更多有用的工具
+
+感谢您的支持和使用！🙏
