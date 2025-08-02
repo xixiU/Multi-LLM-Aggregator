@@ -277,6 +277,75 @@ class AIAggregator {
         }, 100);
     }
 
+    // 启动独立的tab切换序列
+    startTabSwitchSequence(enabledAIs) {
+        if (enabledAIs.length === 0) return;
+
+        console.log('Starting tab switch sequence for:', enabledAIs);
+
+        // AI tab URLs mapping
+        const aiUrls = {
+            'chatgpt': 'https://chatgpt.com/*',
+            'gemini': 'https://gemini.google.com/*',
+            'grok': 'https://x.com/i/grok',
+            'kimi': 'https://kimi.moonshot.cn/*'
+        };
+
+        let currentIndex = 0;
+        const switchToNextTab = () => {
+            if (currentIndex < enabledAIs.length) {
+                const ai = enabledAIs[currentIndex];
+                const url = aiUrls[ai];
+
+                console.log(`Switching to ${ai} tab (${currentIndex + 1}/${enabledAIs.length})`);
+
+                // 切换到AI标签页
+                chrome.tabs.query({ url: url }, (tabs) => {
+                    if (tabs.length > 0) {
+                        chrome.tabs.update(tabs[0].id, { active: true });
+                        console.log(`Successfully switched to ${ai} tab`);
+                    } else {
+                        console.log(`No ${ai} tab found`);
+                    }
+                });
+
+                currentIndex++;
+
+                // 2秒后切换到下一个tab
+                setTimeout(switchToNextTab, 2000);
+            } else {
+                // 所有AI tab都看过了，2秒后回到AI Aggregator
+                console.log('All AI tabs viewed, returning to AI Aggregator');
+                setTimeout(() => {
+                    // 找到AI Aggregator标签页并切换回去
+                    chrome.tabs.query({ url: chrome.runtime.getURL('main.html') }, (tabs) => {
+                        if (tabs.length > 0) {
+                            chrome.tabs.update(tabs[0].id, { active: true });
+                            console.log('Returned to AI Aggregator');
+                        } else {
+                            // 如果找不到，查找包含 main.html 的标签页
+                            chrome.tabs.query({}, (allTabs) => {
+                                const aggregatorTab = allTabs.find(tab =>
+                                    tab.url && tab.url.includes('main.html')
+                                );
+                                if (aggregatorTab) {
+                                    chrome.tabs.update(aggregatorTab.id, { active: true });
+                                    console.log('Returned to AI Aggregator (fallback)');
+                                }
+                            });
+                        }
+                    });
+                }, 2000);
+            }
+        };
+
+        // 延迟500ms开始切换序列，给查询发送一些时间
+        setTimeout(() => {
+            console.log('Starting tab switches...');
+            switchToNextTab();
+        }, 500);
+    }
+
     async submitToAllAI() {
         const prompt = document.getElementById('prompt-input').value.trim();
         if (!prompt) {
@@ -299,10 +368,10 @@ class AIAggregator {
             }
         });
 
-        // 只发送到启用的AI
+        // 只发送到启用的AI（并行发送）
         for (const ai of enabledAIsList) {
             try {
-                await this.sendMessage({
+                this.sendMessage({
                     type: 'queryAI',
                     target: ai,
                     prompt: prompt
@@ -312,6 +381,9 @@ class AIAggregator {
                 this.updateContent(ai, `错误：${error.message}`, 'error');
             }
         }
+
+        // 启动独立的tab切换序列
+        this.startTabSwitchSequence(enabledAIsList);
     }
 
     async sendMessage(message) {
