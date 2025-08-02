@@ -6,6 +6,11 @@ on:
       - 'v*'  # 当推送v开头的标签时触发
   workflow_dispatch:  # 允许手动触发
 
+  # 添加权限配置
+permissions:
+  contents: write
+  actions: read
+
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
@@ -13,6 +18,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
